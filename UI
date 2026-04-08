@@ -701,7 +701,6 @@ end)
 				end
 			end)
 		end
-
 		return btn, gradient, stroke
 	end
 
@@ -768,7 +767,6 @@ end)
 			if #box.Text > 20 then
 				box.Text = box.Text:sub(1, 20)
 			end
-
 			if isFocused and #box.Text > 0 then
 				task.spawn(function()
 					local orig = box.TextColor3
@@ -851,7 +849,6 @@ end)
 						boxStroke.Transparency = 0.5
 						isFlashing = false
 					end)
-
 				else
 					task.spawn(function()
 						for _ = 1, math.random(3, 5) do
@@ -868,7 +865,6 @@ end)
 				end
 			end
 		end)
-
 		return box, container
 	end
 
@@ -1045,7 +1041,6 @@ end)
 						frame.Visible = true
 						task.wait(0.04)
 					end
-
 					TweenService:Create(uiScale, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Scale = 0}):Play()
 				else
 					TweenService:Create(uiScale, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Scale = deviceScale}):Play()
@@ -1364,7 +1359,6 @@ end)
 
 	frameTabBtn.MouseButton1Click:Connect(function() switchTab(true) end)
 	selfTabBtn.MouseButton1Click:Connect(function() switchTab(false) end)
-
 	minimizeBtn.MouseButton1Click:Connect(function()
 		dragging = false
 		targetPos = nil
@@ -1434,6 +1428,12 @@ end)
 
 			frame.BackgroundTransparency = 0
 			uiScale.Scale = deviceScale
+			TweenService:Create(uiScale, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Scale = 0}):Play()
+			task.wait(0.3)
+			screenGui:Destroy()
+		end)
+	end)
+
 local dragging = false
 local dragStart = nil
 local startPos = nil
