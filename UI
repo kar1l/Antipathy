@@ -1486,6 +1486,11 @@ local changeConnection = nil
 			exactY = exactY + (targetPos.Y.Offset - exactY) * DRAG_SMOOTHNESS
 			frame.Position = UDim2.new(targetPos.X.Scale, exactX, targetPos.Y.Scale, exactY)
 		elseif not dragging then
+			targetPos = nil
+			exactX = nil
+			exactY = nil
+		end
+	end)
 
 return {
     sourceBox = sourceBox,
