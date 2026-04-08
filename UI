@@ -351,7 +351,7 @@ end)
 
 local dirX = 1
 local dirY = 1
-local speed = 1
+local speed = 0.5
 local floatX = 0
 local floatY = 0
 
