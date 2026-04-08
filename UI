@@ -1,0 +1,1510 @@
+	local Players = game:GetService("Players")
+	local UserInputService = game:GetService("UserInputService")
+	local TweenService = game:GetService("TweenService")
+	local RunService = game:GetService("RunService")
+	local LocalPlayer = Players.LocalPlayer
+
+	local pg = LocalPlayer:WaitForChild("PlayerGui")
+	local loaderGui = Instance.new("ScreenGui")
+	loaderGui.Name = "AntipathyLoader"
+	loaderGui.ResetOnSpawn = false
+	loaderGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+	loaderGui.Parent = pg
+
+	local dimBg = Instance.new("Frame")
+	dimBg.Size = UDim2.new(1, 0, 1, 0)
+	dimBg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	dimBg.BackgroundTransparency = 1
+	dimBg.BorderSizePixel = 0
+	dimBg.ZIndex = 100
+	dimBg.Parent = loaderGui
+
+	local card = Instance.new("Frame")
+	card.Size = UDim2.new(0, 0, 0, 0)
+	card.Position = UDim2.new(0.5, 0, 0.5, 0)
+	card.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	card.BorderSizePixel = 0
+	card.ClipsDescendants = true
+	card.ZIndex = 101
+	card.Parent = loaderGui
+
+	local cardCorner = Instance.new("UICorner")
+	cardCorner.CornerRadius = UDim.new(0, 12)
+	cardCorner.Parent = card
+
+	local cardStroke = Instance.new("UIStroke")
+	cardStroke.Color = Color3.fromRGB(200, 200, 200)
+	cardStroke.Thickness = 2
+	cardStroke.Transparency = 0.4
+	cardStroke.Parent = card
+
+	task.spawn(function()
+		while cardStroke.Parent do
+			TweenService:Create(cardStroke, TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.0, Color = Color3.fromRGB(255, 255, 255)}):Play()
+			task.wait(1.5)
+			TweenService:Create(cardStroke, TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.6, Color = Color3.fromRGB(180, 180, 180)}):Play()
+			task.wait(1.5)
+		end
+	end)
+
+	local cardGrad = Instance.new("UIGradient")
+	cardGrad.Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(10, 10, 10)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
+	}
+	cardGrad.Rotation = 145
+	cardGrad.Parent = card
+
+	-- Rotating circle
+	local loaderSpinner = Instance.new("ImageLabel")
+	loaderSpinner.Size = UDim2.new(0, 50, 0, 50)
+	loaderSpinner.Position = UDim2.new(0.5, -25, 0, 6)
+	loaderSpinner.BackgroundTransparency = 1
+	loaderSpinner.Image = "rbxassetid://89757148195321"
+	loaderSpinner.ImageColor3 = Color3.fromRGB(255, 255, 255)
+	loaderSpinner.ZIndex = 103
+	loaderSpinner.Parent = card
+
+	task.spawn(function()
+		local angle = 0
+		while loaderSpinner.Parent do
+			angle = angle - 6
+			loaderSpinner.Rotation = angle
+			RunService.Heartbeat:Wait()
+		end
+	end)
+
+	local cardStroke = Instance.new("UIStroke")
+	cardStroke.Color = Color3.fromRGB(150, 150, 150)
+	cardStroke.Thickness = 2
+	cardStroke.Transparency = 0.5
+	cardStroke.Parent = card
+
+	task.spawn(function()
+		while card.Parent do
+			if math.random(1, 4) == 1 then
+				cardStroke.Color = Color3.fromRGB(255, 255, 255)
+				cardStroke.Transparency = 0
+				task.wait(0.04)
+				cardStroke.Color = Color3.fromRGB(100, 100, 100)
+				cardStroke.Transparency = 0.8
+				task.wait(0.04)
+			end
+			task.wait(0.05 + math.random() * 0.1)
+		end
+	end)
+
+	local titleLabel = Instance.new("TextLabel")
+	titleLabel.BackgroundTransparency = 1
+	titleLabel.Size = UDim2.new(1, 0, 0, 20)
+	titleLabel.Position = UDim2.new(0, 0, 0, 12)
+	titleLabel.Text = "Why, Antipathy?"
+	titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	titleLabel.Font = Enum.Font.GothamBold
+	titleLabel.TextSize = 16
+	titleLabel.ZIndex = 102
+	titleLabel.Parent = card
+
+	card.Size = UDim2.new(0, 0, 0, 0)
+	TweenService:Create(card, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+		Size = UDim2.new(0, 200, 0, 100),
+		Position = UDim2.new(0.5, -100, 0.5, -50)
+	}):Play()
+	task.wait(0.35)
+
+	loaderSpinner.Position = UDim2.new(0.5, -25, 0, 36)
+
+	task.spawn(function()
+		local baseX, baseY = 0, 12
+		local glitchNames = {"Why, Antipathy", " @nt1p4thy", "wHyY, A#t!p4thy", "An+ip4thy","wwHy, aNtiPAtHy", "#!$#%^#&)"}
+		while titleLabel.Parent do
+			titleLabel.Position = UDim2.new(0, baseX + math.random(-1, 1), 0, baseY + math.random(-1, 1))
+			titleLabel.TextTransparency = math.random() * 0.12
+
+			if math.random(1, 5) == 1 then
+				for _ = 1, math.random(3, 6) do
+					titleLabel.Text = glitchNames[math.random(#glitchNames)]
+					titleLabel.Position = UDim2.new(0, baseX + math.random(-6, 6), 0, baseY + math.random(-2, 2))
+					local bright = math.random(2) == 1
+					titleLabel.TextColor3 = bright and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(math.random(100,200), math.random(100,200), math.random(100,200))
+					titleLabel.TextTransparency = math.random() * 0.5
+					task.wait(0.03 + math.random() * 0.03)
+				end
+				titleLabel.Text = "Antipathy"
+				titleLabel.Position = UDim2.new(0, baseX, 0, baseY)
+				titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+				titleLabel.TextTransparency = 0
+			end
+			task.wait(0.05 + math.random() * 0.08)
+		end
+	end)
+
+	local barBg = Instance.new("Frame")
+	barBg.Size = UDim2.new(0.75, 0, 0, 4)
+	barBg.Position = UDim2.new(0.125, 0, 1, -16)
+	barBg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	barBg.BorderSizePixel = 0
+	barBg.ZIndex = 103
+	barBg.Parent = card
+
+	local barBgCorner = Instance.new("UICorner")
+	barBgCorner.CornerRadius = UDim.new(0, 2)
+	barBgCorner.Parent = barBg
+
+	local barFill = Instance.new("Frame")
+	barFill.Size = UDim2.new(0, 0, 1, 0)
+	barFill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	barFill.BorderSizePixel = 0
+	barFill.ZIndex = 104
+	barFill.Parent = barBg
+
+	local barFillCorner = Instance.new("UICorner")
+	barFillCorner.CornerRadius = UDim.new(0, 2)
+	barFillCorner.Parent = barFill
+
+	local fillGrad = Instance.new("UIGradient")
+	fillGrad.Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 200, 200))
+	}
+	fillGrad.Parent = barFill
+
+	local pctLabel = Instance.new("TextLabel")
+	pctLabel.BackgroundTransparency = 1
+	pctLabel.Size = UDim2.new(1, 0, 0, 14)
+	pctLabel.Position = UDim2.new(0, 0, 1, -50)
+	pctLabel.Text = "0%"
+	pctLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	pctLabel.Font = Enum.Font.GothamMedium
+	pctLabel.TextSize = 12
+	pctLabel.ZIndex = 103
+	pctLabel.Parent = card
+
+	local glowAlive = true
+	task.spawn(function()
+		while glowAlive and barFill.Parent do
+			TweenService:Create(barFill, TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {BackgroundTransparency = 0.3}):Play()
+			task.wait(0.6)
+			TweenService:Create(barFill, TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {BackgroundTransparency = 0}):Play()
+			task.wait(0.6)
+		end
+	end)
+
+	local steps = {
+		{0.1, ""},
+        {0.15, ""},
+		{0.22, ""},
+		{0.29, ""},
+		{0.35, ""},
+		{0.41, ""},
+		{0.43, ""},
+		{0.68, ""},
+        {0.71, ""},
+        {0.77, ""},
+        {0.84, ""},
+        {0.97, ""},
+        {1.00, ""}
+	}
+
+	for _, step in ipairs(steps) do
+		pctLabel.Text = math.floor(step[1] * 100) .. "%"
+		TweenService:Create(barFill, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(step[1], 0, 1, 0)}):Play()
+		task.wait(0.25 + math.random() * 0.15)
+	end
+
+	task.wait(0.25)
+	glowAlive = false
+
+	TweenService:Create(card, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+		Size = UDim2.new(0, 0, 0, 0),
+		Position = UDim2.new(0.5, 0, 0.5, 0)
+	}):Play()
+
+	task.wait(0.3)
+	loaderGui:Destroy()
+
+	local existing = pg:FindFirstChild("AntipathyH")
+	if existing then existing:Destroy() end
+
+	local screenGui = Instance.new("ScreenGui")
+	screenGui.Name = "AntipathyH"
+	screenGui.ResetOnSpawn = false
+	screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+	screenGui.Parent = pg
+
+	local frame = Instance.new("Frame")
+	frame.Name = "Main4"
+	frame.Size = UDim2.new(0, 420, 0, 500)
+	frame.Position = UDim2.new(0.5, -210, 0.5, -190)
+	frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	frame.BorderSizePixel = 0
+	frame.ClipsDescendants = true
+	frame.Parent = screenGui
+
+	local viewportSize = workspace.CurrentCamera.ViewportSize
+	local deviceScale = math.min(1, math.min(viewportSize.X / 1920, viewportSize.Y / 1080))
+
+	local uiScale = Instance.new("UIScale")
+	uiScale.Scale = deviceScale
+	uiScale.Parent = frame
+
+	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+		local vp = workspace.CurrentCamera.ViewportSize
+		deviceScale = math.min(1, math.min(vp.X / 1920, vp.Y / 1080))
+		if uiScale.Scale > 0 then
+			uiScale.Scale = deviceScale
+		end
+	end)
+
+	local mainGradient = Instance.new("UIGradient")
+	mainGradient.Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
+		ColorSequenceKeypoint.new(0.7, Color3.fromRGB(8, 8, 8)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
+	}
+	mainGradient.Rotation = 90
+	mainGradient.Parent = frame
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 14)
+	corner.Parent = frame
+
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = Color3.fromRGB(80, 80, 80)
+	stroke.Thickness = 1
+	stroke.Transparency = 0.8
+	stroke.Parent = frame
+
+	-- Halftone corner decoration
+	local halftones = {}
+	local function addHalftoneCorner(anchorX, anchorY, rot)
+		local img = Instance.new("ImageLabel")
+		img.Size = UDim2.new(0, 110, 0, 110)
+		img.AnchorPoint = Vector2.new(anchorX, anchorY)
+		local xOff = anchorX == 0 and 15 or -15
+		local yOff = anchorY == 0 and 15 or -15
+		img.Position = UDim2.new(anchorX, xOff, anchorY, yOff)
+		img.BackgroundTransparency = 1
+		img.Image = "rbxassetid://99539206426667"
+		img.ImageColor3 = Color3.fromRGB(255, 255, 255)
+		img.ImageTransparency = 0.82
+		img.Rotation = rot
+		img.ZIndex = 1
+		img.Parent = frame
+		table.insert(halftones, img)
+		return img
+	end
+	addHalftoneCorner(0, 0, 5)
+	addHalftoneCorner(1, 0, 85)
+	addHalftoneCorner(0, 1, 275)
+	addHalftoneCorner(1, 1, 175)
+
+	-- Big center sparkle
+	local centerSparkle = Instance.new("ImageLabel")
+	centerSparkle.Size = UDim2.new(0, 250, 0, 250)
+	centerSparkle.AnchorPoint = Vector2.new(0.5, 0.5)
+	centerSparkle.Position = UDim2.new(0.5, 0, 0.5, 0)
+	centerSparkle.BackgroundTransparency = 1
+	centerSparkle.Image = "rbxassetid://86630871053206"
+	centerSparkle.ImageColor3 = Color3.fromRGB(255, 255, 255)
+	centerSparkle.ImageTransparency = 0.88
+	centerSparkle.ZIndex = 1
+	centerSparkle.Parent = frame
+
+	task.spawn(function()
+		while centerSparkle.Parent do
+			TweenService:Create(centerSparkle, TweenInfo.new(3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {ImageTransparency = 0.78, Rotation = 15}):Play()
+			task.wait(3)
+			TweenService:Create(centerSparkle, TweenInfo.new(3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {ImageTransparency = 0.88, Rotation = 0}):Play()
+			task.wait(3)
+		end
+	end)
+
+local bgFooter = Instance.new("TextLabel")
+bgFooter.BackgroundTransparency = 1
+bgFooter.Size = UDim2.new(0, 250, 0, 20)
+bgFooter.Position = UDim2.new(0, 0, 0, 0)
+bgFooter.Text = "All Heil Antipathy & @hiies"
+bgFooter.TextColor3 = Color3.fromRGB(150, 150, 150)
+bgFooter.Font = Enum.Font.GothamBold
+bgFooter.TextSize = 15
+bgFooter.ZIndex = 1
+bgFooter.Parent = frame
+
+-- Wait for UI to properly render
+task.wait()
+
+task.spawn(function()
+	local baseText = "All Heil Antipathy & @hiies"
+	local glitchNames = {baseText, "All Heil Antipathy & @hiies", "A11 H3il Ant1p4##y & @hiies", "Hell H31l 4n+1path-y & @hiies", "A1l He1l A-A-AnT1PAth..y"}
+	while bgFooter.Parent do
+		if math.random(1, 6) == 1 then
+			for _ = 1, math.random(4, 8) do
+				bgFooter.Text = glitchNames[math.random(#glitchNames)]
+				task.wait(0.025 + math.random() * 0.03)
+			end
+			bgFooter.Text = baseText
+		end
+		task.wait(0.05 + math.random() * 0.08)
+	end
+end)
+
+local dirX = 1
+local dirY = 1
+local speed = 1
+local floatX = 0
+local floatY = 0
+
+local lastTrail = 0
+
+task.spawn(function()
+	while bgFooter.Parent do
+		local frameSize = frame.AbsoluteSize
+		local textSize = bgFooter.AbsoluteSize
+		
+		if frameSize.X == 0 or textSize.X == 0 then
+			RunService.Heartbeat:Wait()
+			continue
+		end
+		
+		local maxX = frameSize.X - textSize.X
+		local maxY = frameSize.Y - textSize.Y
+		
+		floatX = floatX + (speed * dirX)
+		floatY = floatY + (speed * dirY)
+		local nX = floatX
+		local nY = floatY
+		
+		local hit = false
+		
+		if nX >= maxX then
+			nX = maxX
+			floatX = maxX
+			dirX = -1
+			hit = true
+		elseif nX <= 0 then
+			nX = 0
+			floatX = 0
+			dirX = 1
+			hit = true
+		end
+		
+		if nY >= maxY then
+			nY = maxY
+			floatY = maxY
+			dirY = -1
+			hit = true
+		elseif nY <= 0 then
+			nY = 0
+			floatY = 0
+			dirY = 1
+			hit = true
+		end
+		
+		if hit then
+			bgFooter.TextColor3 = Color3.fromRGB(
+				math.random(150,255),
+				math.random(150,255),
+				math.random(150,255)
+			)
+		end
+		
+		local now = tick()
+		if now - lastTrail > 0.03 then
+			lastTrail = now
+			
+			local ghost = bgFooter:Clone()
+			ghost.TextColor3 = Color3.fromRGB(255, 255, 255)
+			ghost.TextTransparency = 0.6
+			ghost.ZIndex = bgFooter.ZIndex - 1
+			ghost.TextSize = bgFooter.TextSize + 1
+			ghost.Parent = frame
+			
+			task.spawn(function()
+				for i = 1, 10 do
+					ghost.TextTransparency += 0.04
+					task.wait(0.02)
+				end
+				ghost:Destroy()
+			end)
+		end
+		
+		bgFooter.Position = UDim2.new(0, math.floor(nX), 0, math.floor(nY))
+		
+		RunService.Heartbeat:Wait()
+	end
+end)
+
+	local topbar = Instance.new("Frame")
+	topbar.Name = "Topbar"
+	topbar.Size = UDim2.new(1, 0, 0, 50)
+	topbar.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+	topbar.BorderSizePixel = 0
+	topbar.ZIndex = 10
+	topbar.Parent = frame
+
+	local topGradient = Instance.new("UIGradient")
+	topGradient.Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 20)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 10, 10))
+	}
+	topGradient.Rotation = 90
+	topGradient.Parent = topbar
+
+	local topCorner = Instance.new("UICorner")
+	topCorner.CornerRadius = UDim.new(0, 14)
+	topCorner.Parent = topbar
+
+	local title = Instance.new("TextLabel")
+	title.BackgroundTransparency = 1
+	title.Position = UDim2.new(0, 16, 0, 8)
+	title.Size = UDim2.new(1, -200, 0, 16)
+	title.Text = "Heil Antipathy"
+	title.TextColor3 = Color3.fromRGB(255, 255, 255)
+	title.Font = Enum.Font.GothamBold
+	title.TextSize = 15
+	title.TextXAlignment = Enum.TextXAlignment.Left
+	title.Parent = topbar
+
+	-- Small sparkle next to heil antipathy
+	local titleSparkle = Instance.new("ImageLabel")
+	titleSparkle.Size = UDim2.new(0, 36, 0, 36)
+	titleSparkle.AnchorPoint = Vector2.new(0.5, 0.5)
+	titleSparkle.Position = UDim2.new(0, 10, 0, 16)
+	titleSparkle.BackgroundTransparency = 1
+	titleSparkle.Image = "rbxassetid://107821377391839"
+	titleSparkle.ImageColor3 = Color3.fromRGB(255, 255, 255)
+	titleSparkle.ZIndex = 110
+	titleSparkle.Parent = topbar
+
+	task.spawn(function()
+		while titleSparkle.Parent do
+			TweenService:Create(titleSparkle, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {ImageTransparency = 0.05, Rotation = 30, Size = UDim2.new(0, 40, 0, 40)}):Play()
+			task.wait(1.2)
+			TweenService:Create(titleSparkle, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {ImageTransparency = 0.6, Rotation = -10, Size = UDim2.new(0, 24, 0, 24)}):Play()
+			task.wait(1.2)
+		end
+	end)
+
+	task.spawn(function()
+		local baseX, baseY = 16, 8
+		local glitchNames = {"Heil Antipathy", "H3ll An+!p4thy", "H31l An+ip4t#y", "!%#? Ant1p4thy", "Heil !@#$%^&*)", "85912011420916120825", "yhtapitnA lieH", "A-A-Antipathy", "H#1l An+1p@+#y", "H3il Heil H31l lieH" }
+		while title.Parent do
+			title.Position = UDim2.new(0, baseX + math.random(-2, 2), 0, baseY + math.random(-1, 1))
+			title.TextTransparency = math.random() * 0.12
+
+			if math.random(1, 6) == 1 then
+				for _ = 1, math.random(4, 8) do
+					title.Text = glitchNames[math.random(#glitchNames)]
+					title.Position = UDim2.new(0, baseX + math.random(-8, 8), 0, baseY + math.random(-3, 3))
+					local bright = math.random(2) == 1
+					title.TextColor3 = bright and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(math.random(100,200), math.random(100,200), math.random(100,200))
+					title.TextTransparency = math.random() * 0.6
+					task.wait(0.025 + math.random() * 0.03)
+				end
+
+				title.Text = "Heil Antipathy"
+				title.Position = UDim2.new(0, baseX, 0, baseY)
+				title.TextColor3 = Color3.fromRGB(255, 255, 255)
+				title.TextTransparency = 0
+			end
+
+			task.wait(0.05 + math.random() * 0.08)
+		end
+	end)
+
+	local subtitle = Instance.new("TextLabel")
+	subtitle.BackgroundTransparency = 1
+	subtitle.Position = UDim2.new(0, 16, 0, 24)
+	subtitle.Size = UDim2.new(1, -200, 0, 13)
+	subtitle.Text = "Is This.. Antipathy? CTRL+A To Hide"
+	subtitle.TextColor3 = Color3.fromRGB(160, 160, 160)
+	subtitle.Font = Enum.Font.GothamMedium
+	subtitle.TextSize = 12
+	subtitle.TextXAlignment = Enum.TextXAlignment.Left
+	subtitle.Parent = topbar
+
+	local function makeTopButton(text, xOffset, colorSet)
+		local btn = Instance.new("TextButton")
+		btn.Size = UDim2.new(0, 32, 0, 28)
+		btn.Position = UDim2.new(1, xOffset, 0.5, -14)
+		btn.BackgroundColor3 = colorSet.base or Color3.fromRGB(255, 255, 255)
+		btn.TextColor3 = Color3.fromRGB(0, 0, 0)
+		btn.TextStrokeColor3 = Color3.fromRGB(150, 150, 150)
+		btn.TextStrokeTransparency = 0.8
+		btn.Font = Enum.Font.GothamBold
+		btn.TextSize = 16
+		btn.Text = text
+		btn.ZIndex = 300
+		btn.AutoButtonColor = false
+		btn.Parent = topbar
+
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0, 8)
+		corner.Parent = btn
+
+		local gradient
+		if colorSet.gradient then
+			gradient = Instance.new("UIGradient")
+			gradient.Color = colorSet.gradient
+			gradient.Rotation = 90
+			gradient.Parent = btn
+		end
+
+		local stroke = Instance.new("UIStroke")
+		stroke.Color = colorSet.stroke
+		stroke.Thickness = 2
+		stroke.Transparency = 0.1
+		stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+		stroke.Parent = btn
+
+		btn.MouseEnter:Connect(function()
+			if gradient then
+				TweenService:Create(gradient, TweenInfo.new(0.12), {Color = colorSet.hoverGradient}):Play()
+			elseif colorSet.hoverBase then
+				TweenService:Create(btn, TweenInfo.new(0.12), {BackgroundColor3 = colorSet.hoverBase}):Play()
+			end
+			TweenService:Create(stroke, TweenInfo.new(0.12), {Transparency = 0}):Play()
+		end)
+		btn.MouseLeave:Connect(function()
+			if gradient then
+				TweenService:Create(gradient, TweenInfo.new(0.12), {Color = colorSet.gradient}):Play()
+			elseif colorSet.base then
+				TweenService:Create(btn, TweenInfo.new(0.12), {BackgroundColor3 = colorSet.base}):Play()
+			end
+			TweenService:Create(stroke, TweenInfo.new(0.12), {Transparency = 0.1}):Play()
+		end)
+		btn.MouseButton1Down:Connect(function()
+			TweenService:Create(btn, TweenInfo.new(0.05), {Size = UDim2.new(0, 29, 0, 25)}):Play()
+		end)
+		btn.MouseButton1Up:Connect(function()
+			TweenService:Create(btn, TweenInfo.new(0.05), {Size = UDim2.new(0, 32, 0, 28)}):Play()
+		end)
+
+		return btn
+	end
+
+	local function createStyledButton(text, layoutOrder, isRed, parent)
+		local btn = Instance.new("TextButton")
+		btn.LayoutOrder = layoutOrder
+		btn.Size = UDim2.new(1, 0, 0, 38)
+		btn.BackgroundColor3 = isRed and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(0, 0, 0)
+		btn.TextColor3 = isRed and Color3.fromRGB(0, 0, 0) or Color3.fromRGB(255, 255, 255)
+		btn.TextStrokeColor3 = Color3.fromRGB(120, 120, 120)
+		btn.TextStrokeTransparency = 0.8
+		btn.Font = Enum.Font.GothamBold
+		btn.TextSize = 15
+		btn.Text = text
+		btn.AutoButtonColor = false
+		btn.Parent = parent
+
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0, 10)
+		corner.Parent = btn
+
+		local stroke = Instance.new("UIStroke")
+		stroke.Thickness = 2
+		stroke.Transparency = isRed and 0.5 or 0.0
+		stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+		stroke.Parent = btn
+
+		local theme = {}
+		local gradient
+		if isRed then
+			theme.gradient = ColorSequence.new{
+				ColorSequenceKeypoint.new(0, Color3.fromRGB(240, 240, 240)),
+				ColorSequenceKeypoint.new(0.5, Color3.fromRGB(220, 220, 220)),
+				ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 200, 200))
+			}
+			theme.hoverGradient = ColorSequence.new{
+				ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+				ColorSequenceKeypoint.new(0.5, Color3.fromRGB(240, 240, 240)),
+				ColorSequenceKeypoint.new(1, Color3.fromRGB(220, 220, 220))
+			}
+			theme.stroke = Color3.fromRGB(150, 150, 150)
+			theme.hoverStroke = Color3.fromRGB(100, 100, 100)
+			
+			gradient = Instance.new("UIGradient")
+			gradient.Rotation = 90
+			gradient.Color = theme.gradient
+			gradient.Parent = btn
+		else
+			theme.base = Color3.fromRGB(0, 0, 0)
+			theme.hoverBase = Color3.fromRGB(35, 35, 35)
+			theme.stroke = Color3.fromRGB(100, 100, 100)
+			theme.hoverStroke = Color3.fromRGB(150, 150, 150)
+		end
+
+		stroke.Color = theme.stroke
+		stroke.Transparency = isRed and 0.5 or 0.2
+
+		btn.MouseEnter:Connect(function()
+			if gradient then
+				TweenService:Create(gradient, TweenInfo.new(0.1), {Color = theme.hoverGradient}):Play()
+			else
+				TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = theme.hoverBase}):Play()
+			end
+			TweenService:Create(stroke, TweenInfo.new(0.1), {Transparency = 0, Color = theme.hoverStroke}):Play()
+		end)
+		btn.MouseLeave:Connect(function()
+			if gradient then
+				TweenService:Create(gradient, TweenInfo.new(0.1), {Color = theme.gradient}):Play()
+			else
+				TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = theme.base}):Play()
+			end
+			TweenService:Create(stroke, TweenInfo.new(0.1), {Transparency = isRed and 0.5 or 0.0, Color = theme.stroke}):Play()
+		end)
+
+		local origBtnSize = btn.Size
+		btn.MouseButton1Down:Connect(function()
+			TweenService:Create(btn, TweenInfo.new(0.06), {
+				Size = UDim2.new(origBtnSize.X.Scale, origBtnSize.X.Offset, origBtnSize.Y.Scale, origBtnSize.Y.Offset - 3)
+			}):Play()
+		end)
+		btn.MouseButton1Up:Connect(function()
+			TweenService:Create(btn, TweenInfo.new(0.06), {Size = origBtnSize}):Play()
+		end)
+
+		if not isRed then
+			task.spawn(function()
+				local glitchTexts = {
+					text,
+					text:gsub("%w", function() return string.char(math.random(33, 126)) end),
+					"#" .. text .. "!",
+					"!" .. text:sub(1, #text-1) .. "?",
+					"0101010",
+					text:upper(),
+					text:reverse()
+				}
+				while btn.Parent do
+					if math.random(1, 6) == 1 then
+						local origStroke = stroke.Color
+						local origText = btn.TextColor3
+						stroke.Color = Color3.fromRGB(255, 255, 255)
+						stroke.Transparency = 0
+						
+						for _ = 1, math.random(3, 6) do
+							btn.Text = glitchTexts[math.random(#glitchTexts)]
+							local bright = math.random(2) == 1
+							btn.TextColor3 = bright and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(math.random(50,200), math.random(50,200), math.random(50,200))
+							btn.TextSize = 16
+							task.wait(0.03 + math.random()*0.04)
+						end
+						
+						stroke.Color = origStroke
+						stroke.Transparency = 0.2
+						btn.TextColor3 = origText
+						btn.TextSize = 15
+						btn.Text = text
+					end
+					task.wait(0.1 + math.random()*0.2)
+				end
+			end)
+		end
+
+		return btn, gradient, stroke
+	end
+
+	local function makeLabel(text, order, icon, wScale, wOff)
+		local lbl = Instance.new("TextLabel")
+		lbl.LayoutOrder = order
+		lbl.BackgroundTransparency = 1
+		lbl.Size = UDim2.new(wScale or 1, wOff or 0, 0, 16)
+		lbl.Text = (icon or "o") .. " " .. text
+		lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+		lbl.Font = Enum.Font.GothamSemibold
+		lbl.TextSize = 14
+		lbl.TextXAlignment = Enum.TextXAlignment.Left
+		return lbl
+	end
+
+	local function makeBox(placeholder, order, icon, wScale, wOff, isNum)
+		local container = Instance.new("Frame")
+		container.LayoutOrder = order
+		container.Size = UDim2.new(wScale or 1, wOff or 0, 0, 44)
+		container.BackgroundTransparency = 1
+		container.Name = "InputContainer"
+
+		local box = Instance.new("TextBox")
+		box.Size = UDim2.new(1, 0, 1, 0)
+		box.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+		box.TextColor3 = Color3.fromRGB(255, 255, 255)
+		box.PlaceholderColor3 = Color3.fromRGB(200, 200, 200)
+		box.PlaceholderText = (icon or "•") .. " " .. placeholder
+		box.Font = Enum.Font.GothamBold
+		box.TextSize = 14
+		box.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+		box.TextStrokeTransparency = 0.5
+		box.ClearTextOnFocus = false
+		box.Text = ""
+		box.TextXAlignment = Enum.TextXAlignment.Left
+		box.Parent = container
+
+		local pad = Instance.new("UIPadding")
+		pad.PaddingLeft = UDim.new(0, 14)
+		pad.PaddingRight = UDim.new(0, 14)
+		pad.Parent = box
+
+		local boxCorner = Instance.new("UICorner")
+		boxCorner.CornerRadius = UDim.new(0, 10)
+		boxCorner.Parent = box
+
+		local boxStroke = Instance.new("UIStroke")
+		boxStroke.Color = Color3.fromRGB(100, 100, 100)
+		boxStroke.Thickness = 2
+		boxStroke.Transparency = 0.5
+		boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+		boxStroke.Parent = box
+
+		local isFocused = false
+		local isFlashing = false
+		local textOnFocus = ""
+
+		box:GetPropertyChangedSignal("Text"):Connect(function()
+			if isNum then
+				local filtered = box.Text:gsub("%D", "")
+				if box.Text ~= filtered then box.Text = filtered end
+			end
+			if #box.Text > 20 then
+				box.Text = box.Text:sub(1, 20)
+			end
+
+			if isFocused and #box.Text > 0 then
+				task.spawn(function()
+					local orig = box.TextColor3
+					box.TextColor3 = Color3.fromRGB(math.random(150,255), math.random(150,255), math.random(150,255))
+					box.TextTransparency = 0.3
+					task.wait(0.04)
+					box.TextColor3 = orig
+					box.TextTransparency = 0
+				end)
+			end
+		end)
+
+		container:GetAttributeChangedSignal("FlashError"):Connect(function()
+			if container:GetAttribute("FlashError") then
+				isFlashing = true
+				TweenService:Create(boxStroke, TweenInfo.new(0.15, Enum.EasingStyle.Sine), {Color = Color3.fromRGB(255, 60, 60), Transparency = 0}):Play()
+				TweenService:Create(box, TweenInfo.new(0.15, Enum.EasingStyle.Sine), {TextColor3 = Color3.fromRGB(255, 120, 120)}):Play()
+				task.delay(0.5, function()
+					isFlashing = false
+					if box.Parent then
+						TweenService:Create(box, TweenInfo.new(0.3, Enum.EasingStyle.Sine), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+					end
+					container:SetAttribute("FlashError", false)
+				end)
+			end
+		end)
+
+		task.spawn(function()
+			while boxStroke.Parent and box.Parent do
+				if isFlashing then
+					task.wait(0.05)
+					continue
+				end
+
+				if isFocused then
+					local v = math.random(180, 255)
+					boxStroke.Color = Color3.fromRGB(v, v, v)
+					boxStroke.Transparency = math.random() * 0.25
+					box.BackgroundColor3 = Color3.fromRGB(math.random(0,12), math.random(0,12), math.random(0,12))
+					task.wait(0.06 + math.random() * 0.08)
+				elseif #box.Text > 0 then
+					local v2 = math.random(130, 180)
+					boxStroke.Color = Color3.fromRGB(v2, v2, v2)
+					boxStroke.Transparency = math.random() * 0.4
+					task.wait(0.3 + math.random() * 0.6)
+				else
+					boxStroke.Color = Color3.fromRGB(100, 100, 100)
+					boxStroke.Transparency = 0.5
+					task.wait(0.15 + math.random() * 0.2)
+				end
+			end
+		end)
+
+		box.Focused:Connect(function()
+			isFocused = true
+			textOnFocus = box.Text
+		end)
+
+		box.FocusLost:Connect(function()
+			isFocused = false
+			local currentText = box.Text:gsub("^%s+", ""):gsub("%s+$", "")
+			local textBefore = textOnFocus:gsub("^%s+", ""):gsub("%s+$", "")
+
+			if currentText ~= textBefore then
+				isFlashing = true
+				if #currentText < #textBefore then
+					task.spawn(function()
+						for _ = 1, math.random(2, 3) do
+							boxStroke.Color = Color3.fromRGB(255, 255, 255)
+							boxStroke.Transparency = 0
+							box.Text = textBefore
+							box.TextColor3 = Color3.fromRGB(255, 255, 255)
+							task.wait(0.12)
+							box.Text = currentText
+							boxStroke.Transparency = 0.8
+							task.wait(0.12)
+						end
+						boxStroke.Color = Color3.fromRGB(100, 100, 100)
+						box.TextColor3 = Color3.fromRGB(255, 255, 255)
+						boxStroke.Transparency = 0.5
+						isFlashing = false
+					end)
+
+				else
+					task.spawn(function()
+						for _ = 1, math.random(3, 5) do
+							boxStroke.Color = Color3.fromRGB(255, 255, 255)
+							boxStroke.Transparency = 0
+							task.wait(0.08)
+							boxStroke.Transparency = 0.7
+							task.wait(0.07)
+						end
+						boxStroke.Color = Color3.fromRGB(200, 200, 200)
+						boxStroke.Transparency = 0.3
+						isFlashing = false
+					end)
+				end
+			end
+		end)
+
+		return box, container
+	end
+
+	local function createStatsRow(layoutOrder, parent, config)
+		local container = Instance.new("Frame")
+		container.LayoutOrder = layoutOrder
+		container.Size = UDim2.new(1, 0, 0, 76)
+		container.BackgroundTransparency = 1
+		container.Parent = parent
+
+		local list = Instance.new("UIListLayout")
+		list.FillDirection = Enum.FillDirection.Vertical
+		list.Padding = UDim.new(0, 4)
+		list.SortOrder = Enum.SortOrder.LayoutOrder
+		list.Parent = container
+
+		local labelsFrame = Instance.new("Frame")
+		labelsFrame.LayoutOrder = 1
+		labelsFrame.Size = UDim2.new(1, 0, 0, 16)
+		labelsFrame.BackgroundTransparency = 1
+		labelsFrame.Parent = container
+
+		local labelsLayout = Instance.new("UIListLayout")
+		labelsLayout.FillDirection = Enum.FillDirection.Horizontal
+		labelsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+		labelsLayout.Padding = UDim.new(0, 8)
+		labelsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+		labelsLayout.Parent = labelsFrame
+
+		local l1 = makeLabel(config.winsLabel, 1, "-", 0.5, -4)
+		l1.Parent = labelsFrame
+		local l2 = makeLabel(config.elimsLabel, 2, "-", 0.5, -4)
+		l2.Parent = labelsFrame
+
+		local inputsFrame = Instance.new("Frame")
+		inputsFrame.LayoutOrder = 2
+		inputsFrame.Size = UDim2.new(1, 0, 0, 44)
+		inputsFrame.BackgroundTransparency = 1
+		inputsFrame.Parent = container
+
+		local inputsLayout = Instance.new("UIListLayout")
+		inputsLayout.FillDirection = Enum.FillDirection.Horizontal
+		inputsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+		inputsLayout.Padding = UDim.new(0, 8)
+		inputsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+		inputsLayout.Parent = inputsFrame
+
+		local winsBox, winsCont = makeBox(config.winsPh, 1, "•", 0.5, -4, true)
+		winsCont.Parent = inputsFrame
+		local elimBox, elimCont = makeBox(config.elimsPh, 2, "•", 0.5, -4, true)
+		elimCont.Parent = inputsFrame
+
+		return {wins = winsBox, elims = elimBox}
+	end
+
+	local function makeTabButton(text, xOffset, isActive)
+		local btn = Instance.new("TextButton")
+		btn.Size = UDim2.new(0, 50, 0, 28)
+		btn.Position = UDim2.new(1, xOffset, 0.5, -14)
+		btn.BackgroundTransparency = 1
+		btn.TextColor3 = isActive and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(120, 120, 120)
+		btn.Font = Enum.Font.GothamBold
+		btn.TextSize = 14
+		btn.Text = text
+		btn.AutoButtonColor = false
+		btn.Parent = topbar
+
+		local uiStroke = Instance.new("UIStroke")
+		uiStroke.Color = Color3.fromRGB(200, 200, 200)
+		uiStroke.Thickness = 1
+		uiStroke.Transparency = isActive and 0.3 or 1
+		uiStroke.Parent = btn
+
+		local line = Instance.new("Frame")
+		line.Size = UDim2.new(0.65, 0, 0, 3)
+		line.Position = UDim2.new(0.175, 0, 1, 0)
+		line.BackgroundColor3 = isActive and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(70, 70, 70)
+		line.BorderSizePixel = 0
+		line.Parent = btn
+
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(1, 0)
+		corner.Parent = line
+
+		task.spawn(function()
+			while btn.Parent do
+				if btn:GetAttribute("IsActiveTab") then
+					local v = math.random(200, 255)
+					line.BackgroundColor3 = Color3.fromRGB(v, v, v)
+					line.Size = UDim2.new(math.random(55, 70) / 100, 0, 0, math.random(2, 4))
+					uiStroke.Transparency = math.random() * 0.3
+					if math.random(1, 6) == 1 then
+						for _ = 1, math.random(2, 4) do
+							line.BackgroundColor3 = (math.random(2)==1) and Color3.fromRGB(255,255,255) or Color3.fromRGB(160,160,160)
+							line.Position = UDim2.new(0.175 + math.random(-2,2)*0.01, 0, 1, math.random(-1,1))
+							task.wait(0.04)
+						end
+						line.Position = UDim2.new(0.175, 0, 1, 0)
+						line.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						line.Size = UDim2.new(0.65, 0, 0, 3)
+					end
+					task.wait(0.08 + math.random() * 0.15)
+				else
+					line.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+					uiStroke.Transparency = 1
+					task.wait(0.3 + math.random() * 0.4)
+				end
+			end
+		end)
+
+		btn:SetAttribute("IsActiveTab", isActive)
+
+		return btn, line, uiStroke
+	end
+
+	local frameTabBtn, frameTabLine, frameTabStroke = makeTabButton("Frame", -181, true)
+	local selfTabBtn, selfTabLine, selfTabStroke = makeTabButton("Self", -128, false)
+
+	local minimizeBtn = makeTopButton("-", -74, {
+		base = Color3.fromRGB(0, 0, 0),
+		hoverBase = Color3.fromRGB(30, 30, 30),
+		stroke = Color3.fromRGB(100, 100, 100)
+	})
+	minimizeBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	minimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	
+	task.spawn(function()
+		local stroke = minimizeBtn:FindFirstChildOfClass("UIStroke")
+		while minimizeBtn.Parent do
+			if math.random(1, 6) == 1 and stroke then
+				local origStroke = stroke.Color
+				stroke.Color = Color3.fromRGB(255, 255, 255)
+				stroke.Transparency = 0
+				
+				for _ = 1, math.random(3, 6) do
+					minimizeBtn.Text = (math.random(2)==1) and "-" or "_"
+					minimizeBtn.TextSize = 18
+					task.wait(0.03 + math.random()*0.04)
+				end
+				
+				stroke.Color = origStroke
+				stroke.Transparency = 0.2
+				minimizeBtn.TextSize = 16
+				minimizeBtn.Text = "-"
+			end
+			task.wait(0.1 + math.random()*0.2)
+		end
+	end)
+
+	local closeBtn = makeTopButton("x", -37, {
+		base = Color3.fromRGB(240, 240, 240),
+		gradient = ColorSequence.new{
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 200, 200))
+		},
+		hoverGradient = ColorSequence.new{
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 100, 100)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 60, 60))
+		},
+		stroke = Color3.fromRGB(120, 120, 120)
+	})
+
+	local isHidden = false
+	local isMinimized = false
+
+	UserInputService.InputBegan:Connect(function(input, gp)
+		if input.KeyCode == Enum.KeyCode.A and (UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService:IsKeyDown(Enum.KeyCode.RightControl)) then
+			isHidden = not isHidden
+			task.spawn(function()
+				if isHidden then
+					for _ = 1, 3 do
+						frame.Visible = false
+						task.wait(0.04)
+						frame.Visible = true
+						task.wait(0.04)
+					end
+
+					TweenService:Create(uiScale, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Scale = 0}):Play()
+				else
+					TweenService:Create(uiScale, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Scale = deviceScale}):Play()
+					task.wait(0.1)
+					for _ = 1, 3 do
+						frame.Visible = false
+						task.wait(0.04)
+						frame.Visible = true
+						task.wait(0.04)
+					end
+				end
+			end)
+		end
+	end)
+
+	local body = Instance.new("Frame")
+	body.Name = "Body"
+	body.BackgroundTransparency = 1
+	body.Position = UDim2.new(0, 0, 0, 35)
+	body.Size = UDim2.new(1, 0, 1, -45)
+	body.Parent = frame
+
+	local function createTab(name, isVisible)
+		local tab = Instance.new("Frame")
+		tab.Name = name
+		tab.BackgroundTransparency = 1
+		tab.BorderSizePixel = 0
+		tab.Size = UDim2.new(1, 0, 1, 0)
+		tab.Visible = isVisible
+		tab.Parent = body
+
+		local pad = Instance.new("UIPadding")
+		pad.PaddingLeft = UDim.new(0, 18)
+		pad.PaddingRight = UDim.new(0, 18)
+		pad.PaddingTop = UDim.new(0, 10)
+		pad.PaddingBottom = UDim.new(0, 14)
+		pad.Parent = tab
+
+		local layout = Instance.new("UIListLayout")
+		layout.Padding = UDim.new(0, 10)
+		layout.SortOrder = Enum.SortOrder.LayoutOrder
+		layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+		layout.Parent = tab
+		return tab
+	end
+
+	local frameTabContent = createTab("FrameTab", true)
+	local selfTabContent  = createTab("SelfTab", false)
+	local statusFrame = Instance.new("Frame")
+	statusFrame.LayoutOrder = 1
+	statusFrame.Size = UDim2.new(1, 0, 0, 28)
+	statusFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+	statusFrame.BorderSizePixel = 0
+	statusFrame.ClipsDescendants = true
+	statusFrame.Parent = frameTabContent
+
+	local statusGradient = Instance.new("UIGradient")
+	statusGradient.Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(18, 18, 18)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 8, 8))
+	}
+	statusGradient.Rotation = 90
+	statusGradient.Parent = statusFrame
+
+	local statusCorner = Instance.new("UICorner")
+	statusCorner.CornerRadius = UDim.new(0, 10)
+	statusCorner.Parent = statusFrame
+
+	local statusStroke = Instance.new("UIStroke")
+	statusStroke.Color = Color3.fromRGB(80, 80, 80)
+	statusStroke.Thickness = 1
+	statusStroke.Transparency = 0.8
+	statusStroke.Parent = statusFrame
+
+	local status = Instance.new("TextLabel")
+	status.Name = "StatusLabel"
+	status.BackgroundTransparency = 1
+	status.Size = UDim2.new(1, -16, 1, 0)
+	status.Position = UDim2.new(0, 12, 0, 0)
+	status.Text = "Initialized."
+	status.TextColor3 = Color3.fromRGB(255, 255, 255)
+	status.Font = Enum.Font.GothamMedium
+	status.TextSize = 13
+	status.TextXAlignment = Enum.TextXAlignment.Left
+	status.Parent = statusFrame
+
+	local progressBar = Instance.new("Frame")
+	progressBar.Name = "ProgressBar"
+	progressBar.Size = UDim2.new(0, 0, 0, 2)
+	progressBar.Position = UDim2.new(0, 12, 0, 20)
+	progressBar.BackgroundColor3 = Color3.fromRGB(100, 200, 100)
+	progressBar.BorderSizePixel = 0
+	progressBar.Parent = statusFrame
+
+	local progressCorner = Instance.new("UICorner")
+	progressCorner.CornerRadius = UDim.new(0, 1)
+	progressCorner.Parent = progressBar
+
+	local statusFrameSelf = statusFrame:Clone()
+	statusFrameSelf.Parent = selfTabContent
+	local statusSelf = statusFrameSelf:FindFirstChild("StatusLabel")
+	local progressBarSelf = statusFrameSelf:FindFirstChild("ProgressBar")
+
+	local function setStatus(text, color, duration, progress)
+		status.Text = text
+		status.TextColor3 = color
+		statusSelf.Text = text
+		statusSelf.TextColor3 = color
+
+		local barSize = UDim2.new(progress or 0, 0, 0, 2)
+		TweenService:Create(progressBar, TweenInfo.new(0.3), {Size = barSize}):Play()
+		TweenService:Create(progressBarSelf, TweenInfo.new(0.3), {Size = barSize}):Play()
+
+		if duration then
+			task.spawn(function()
+				task.wait(duration)
+				status.Text = "Initialized."
+				status.TextColor3 = Color3.fromRGB(255, 255, 255)
+				statusSelf.Text = "Initialized."
+				statusSelf.TextColor3 = Color3.fromRGB(255, 255, 255)
+				local resetSize = UDim2.new(0, 0, 0, 2)
+				TweenService:Create(progressBar, TweenInfo.new(0.3), {Size = resetSize}):Play()
+				TweenService:Create(progressBarSelf, TweenInfo.new(0.3), {Size = resetSize}):Play()
+			end)
+		end
+	end
+	local function createFooter(parent)
+		local fb = Instance.new("Frame")
+		fb.LayoutOrder = 100
+		fb.BackgroundTransparency = 1
+		fb.Size = UDim2.new(1,0,0,10)
+		fb.Parent = parent
+		return fb
+	end
+	local function createSwitch(text, order, onChange)
+		local container = Instance.new("Frame")
+		container.LayoutOrder = order
+		container.Size = UDim2.new(1, 0, 0, 20)
+		container.BackgroundTransparency = 1
+		container.Name = "SwitchContainer"
+
+		local label = Instance.new("TextLabel")
+		label.BackgroundTransparency = 1
+		label.Size = UDim2.new(1, -60, 1, 0)
+		label.Text = "•" .. text
+		label.TextColor3 = Color3.fromRGB(220, 220, 220)
+		label.Font = Enum.Font.GothamMedium
+		label.TextSize = 14
+		label.TextXAlignment = Enum.TextXAlignment.Left
+		label.Parent = container
+
+		local switchBg = Instance.new("TextButton")
+		switchBg.Size = UDim2.new(0, 28, 0, 16)
+		switchBg.Position = UDim2.new(1, -28, 0.5, -8)
+		switchBg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+		switchBg.Text = ""
+		switchBg.AutoButtonColor = false
+		switchBg.Parent = container
+
+		local switchCorner = Instance.new("UICorner")
+		switchCorner.CornerRadius = UDim.new(0, 3)
+		switchCorner.Parent = switchBg
+
+		local switchStroke = Instance.new("UIStroke")
+		switchStroke.Color = Color3.fromRGB(100, 100, 100)
+		switchStroke.Thickness = 1
+		switchStroke.Parent = switchBg
+
+		local knob = Instance.new("Frame")
+		knob.Size = UDim2.new(0, 12, 0, 12)
+		knob.Position = UDim2.new(0, 2, 0.5, -6)
+		knob.BackgroundColor3 = Color3.fromRGB(160, 160, 160)
+		knob.Parent = switchBg
+
+		local knobCorner = Instance.new("UICorner")
+		knobCorner.CornerRadius = UDim.new(0, 3)
+		knobCorner.Parent = knob
+
+		local isOn = false
+		local function setState(newState)
+			if isOn == newState then return end
+			isOn = newState
+			if isOn then
+				TweenService:Create(knob, TweenInfo.new(0.2), {Position = UDim2.new(1, -14, 0.5, -6), BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+				TweenService:Create(switchBg, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+				TweenService:Create(switchStroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(220, 220, 220)}):Play()
+			else
+				TweenService:Create(knob, TweenInfo.new(0.2), {Position = UDim2.new(0, 2, 0.5, -6), BackgroundColor3 = Color3.fromRGB(160, 160, 160)}):Play()
+				TweenService:Create(switchBg, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(30, 30, 30)}):Play()
+				TweenService:Create(switchStroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(100, 100, 100)}):Play()
+			end
+		end
+
+		switchBg.MouseButton1Click:Connect(function()
+			local newState = not isOn
+			setState(newState)
+			if onChange then onChange(newState) end
+		end)
+
+		local function getState() return isOn end
+		return container, getState, setState
+	end
+
+	local changeUserIdSwitchFrameContainer, getChangeUserIdFrame, setChangeUserIdFrame
+	local namesOnlySwitchFrameContainer, getNamesOnlyFrame, setNamesOnlyFrame
+
+	changeUserIdSwitchFrameContainer, getChangeUserIdFrame, setChangeUserIdFrame = createSwitch("Change UserId", 2, function(state)
+		if state and setNamesOnlyFrame then setNamesOnlyFrame(false) end
+	end)
+	changeUserIdSwitchFrameContainer.Parent = frameTabContent
+
+	namesOnlySwitchFrameContainer, getNamesOnlyFrame, setNamesOnlyFrame = createSwitch("Names Only", 2.5, function(state)
+		if state and setChangeUserIdFrame then setChangeUserIdFrame(false) end
+	end)
+	namesOnlySwitchFrameContainer.Parent = frameTabContent
+
+	local srcLabel = makeLabel("Source Player", 3, "-")
+	srcLabel.Parent = frameTabContent
+
+	local sourceBox, sourceContainer = makeBox("Enter Source's UserID or Username ", 4, "• ")
+	sourceContainer.Parent = frameTabContent
+
+	local tgtLabel = makeLabel("Target Player", 5, "-")
+	tgtLabel.Parent = frameTabContent
+
+	local targetBox, targetContainer = makeBox("Enter Target's UserID or Username", 6, "• ")
+	targetContainer.Parent = frameTabContent
+
+	local frameStats = createStatsRow(7, frameTabContent, {
+		winsLabel = "Wins",
+		elimsLabel = "Eliminations",
+		winsPh = "Enter Amount",
+		elimsPh = "Enter Amount"
+	})
+	local winsBox = frameStats.wins
+	local elimBox = frameStats.elims
+
+	local applyButton  = createStyledButton("Frame",          8, false, frameTabContent)
+	local revertButton = createStyledButton("Revert Changes", 9, true,  frameTabContent)
+
+	local frameFooter = createFooter(frameTabContent)
+
+	local changeUserIdSwitchSelfContainer, getChangeUserIdSelf, setChangeUserIdSelf
+	local namesOnlySwitchSelfContainer, getNamesOnlySelf, setNamesOnlySelf
+
+	changeUserIdSwitchSelfContainer, getChangeUserIdSelf, setChangeUserIdSelf = createSwitch("Change UserId", 2, function(state)
+		if state and setNamesOnlySelf then setNamesOnlySelf(false) end
+	end)
+	changeUserIdSwitchSelfContainer.Parent = selfTabContent
+
+	namesOnlySwitchSelfContainer, getNamesOnlySelf, setNamesOnlySelf = createSwitch("Names Only", 2.5, function(state)
+		if state and setChangeUserIdSelf then setChangeUserIdSelf(false) end
+	end)
+	namesOnlySwitchSelfContainer.Parent = selfTabContent
+
+	local selfSrcLabel = makeLabel("Source Player", 3, "-")
+	selfSrcLabel.Parent = selfTabContent
+
+	local selfSourceBox, selfSourceContainer = makeBox("Enter Source UserID or Username ", 4, "•")
+	selfSourceContainer.Parent = selfTabContent
+
+	local selfStats = createStatsRow(5, selfTabContent, {
+		winsLabel = "Wins",
+		elimsLabel = "Eliminations",
+		winsPh = "EnterAmount",
+		elimsPh = "Enter Amount"
+	})
+	local selfWinsBox = selfStats.wins
+	local selfElimBox = selfStats.elims
+
+	local spoofButton      = createStyledButton("Spoof",          6, false, selfTabContent)
+	local selfRevertButton = createStyledButton("Revert Changes", 7, true,  selfTabContent)
+
+	local selfFooter = createFooter(selfTabContent)
+
+	local lastExpandedHeight = 500
+
+	local function switchTab(showFrame)
+		local activeTab = showFrame and frameTabContent or selfTabContent
+		local inactiveTab = showFrame and selfTabContent or frameTabContent
+
+		inactiveTab.Visible = false
+		activeTab.Visible = true
+		activeTab.Size = UDim2.new(0.9, 0, 0.9, 0)
+		activeTab.Position = UDim2.new(0.05, 0, 0.05, 0)
+		TweenService:Create(activeTab, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Size = UDim2.new(1, 0, 1, 0),
+			Position = UDim2.new(0, 0, 0, 0)
+		}):Play()
+
+		frameTabBtn:SetAttribute("IsActiveTab", showFrame)
+		selfTabBtn:SetAttribute("IsActiveTab", not showFrame)
+
+		frameTabBtn.TextColor3 = showFrame and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(120, 120, 120)
+		selfTabBtn.TextColor3  = showFrame and Color3.fromRGB(120, 120, 120) or Color3.fromRGB(255, 255, 255)
+
+		frameTabLine.BackgroundColor3 = showFrame and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(70, 70, 70)
+		selfTabLine.BackgroundColor3  = showFrame and Color3.fromRGB(70, 70, 70) or Color3.fromRGB(255, 255, 255)
+
+		frameTabStroke.Transparency = showFrame and 0.3 or 1
+		selfTabStroke.Transparency  = showFrame and 1 or 0.3
+
+		if not isMinimized then
+			task.defer(function()
+				local layout = activeTab:FindFirstChildOfClass("UIListLayout")
+				if layout then
+					local newHeight = math.max(layout.AbsoluteContentSize.Y + 69, 150)
+					lastExpandedHeight = newHeight
+					TweenService:Create(frame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+						Size = UDim2.new(0, 420, 0, newHeight)
+					}):Play()
+				end
+			end)
+		end
+	end
+
+	frameTabBtn.MouseButton1Click:Connect(function() switchTab(true) end)
+	selfTabBtn.MouseButton1Click:Connect(function() switchTab(false) end)
+
+	minimizeBtn.MouseButton1Click:Connect(function()
+		dragging = false
+		targetPos = nil
+		if isMinimized then
+			isMinimized = false
+			for _, ht in ipairs(halftones) do ht.Visible = true end
+			task.spawn(function()
+				body.Visible = true
+				frame.Size = UDim2.new(0, 420, 0, lastExpandedHeight or 500)
+				local s = deviceScale
+				
+				local origPos = frame.Position
+				for _ = 1, 5 do
+					uiScale.Scale = s * (0.8 + math.random() * 0.4)
+					frame.Position = origPos + UDim2.new(0, math.random(-20, 20), 0, math.random(-20, 20))
+					frame.BackgroundTransparency = math.random() * 0.5
+					task.wait(0.03 + math.random() * 0.04)
+				end
+				
+				uiScale.Scale = s
+				frame.Position = origPos
+				frame.BackgroundTransparency = 0
+			end)
+		else
+			isMinimized = true
+			for _, ht in ipairs(halftones) do ht.Visible = false end
+			task.spawn(function()
+				local s = deviceScale
+				local origPos = frame.Position
+				
+				for _ = 1, 5 do
+					uiScale.Scale = s * (0.7 + math.random() * 0.3)
+					frame.Position = origPos + UDim2.new(0, math.random(-15, 15), 0, math.random(-15, 15))
+					frame.BackgroundTransparency = math.random() * 0.3
+					task.wait(0.03 + math.random() * 0.04)
+				end
+				
+				uiScale.Scale = s
+				frame.Position = origPos
+				frame.BackgroundTransparency = 0
+				frame.Size = UDim2.new(0, 420, 0, 50)
+				body.Visible = false
+			end)
+		end
+	end)
+
+	closeBtn.MouseButton1Click:Connect(function()
+		dragging = false
+		targetPos = nil
+		task.spawn(function()
+			local vp = workspace.CurrentCamera.ViewportSize
+
+			local teleports = {
+				UDim2.new(0, 80, 0, 80),
+				UDim2.new(0, vp.X - 500, 0, vp.Y - 200),
+				UDim2.new(0, 120, 0, vp.Y - 380),
+				UDim2.new(0, vp.X - 470, 0, 100),
+				UDim2.new(0.5, -210, 0.5, -190),
+				UDim2.new(0.5, 200, 0.3, 0),
+			}
+			for i, pos in ipairs(teleports) do
+				frame.Position = pos
+				uiScale.Scale = deviceScale * (0.6 + math.random() * 0.4)
+				frame.BackgroundTransparency = math.random() * 0.3
+				task.wait(0.06)
+			end
+
+			frame.BackgroundTransparency = 0
+			uiScale.Scale = deviceScale
+local dragging = false
+local dragStart = nil
+local startPos = nil
+local targetPos = nil
+local exactX = nil
+local exactY = nil
+local dragConnection = nil
+local changeConnection = nil
+
+	topbar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			dragStart = input.Position
+			startPos = frame.Position
+			targetPos = startPos
+			exactX = startPos.X.Offset
+			exactY = startPos.Y.Offset
+
+			local tween = TweenService:Create(frame, TweenInfo.new(0.1), {BackgroundTransparency = 0.05})
+			tween:Play()
+		end
+	end)
+
+	changeConnection = UserInputService.InputChanged:Connect(function(input)
+		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+			local delta = input.Position - dragStart
+			targetPos = UDim2.new(
+				startPos.X.Scale, startPos.X.Offset + (delta.X / uiScale.Scale),
+				startPos.Y.Scale, startPos.Y.Offset + (delta.Y / uiScale.Scale)
+			)
+		end
+	end)
+
+	dragConnection = UserInputService.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = false
+			local tween = TweenService:Create(frame, TweenInfo.new(0.1), {BackgroundTransparency = 0})
+			tween:Play()
+		end
+	end)
+
+	local DRAG_SMOOTHNESS = 0.025
+	RunService.RenderStepped:Connect(function()
+		if targetPos and (dragging or (Vector2.new(frame.Position.X.Offset, frame.Position.Y.Offset) - Vector2.new(targetPos.X.Offset, targetPos.Y.Offset)).Magnitude > 0.1) then
+			if not exactX then
+				exactX = frame.Position.X.Offset
+				exactY = frame.Position.Y.Offset
+			end
+			exactX = exactX + (targetPos.X.Offset - exactX) * DRAG_SMOOTHNESS
+			exactY = exactY + (targetPos.Y.Offset - exactY) * DRAG_SMOOTHNESS
+			frame.Position = UDim2.new(targetPos.X.Scale, exactX, targetPos.Y.Scale, exactY)
+		elseif not dragging then
+
+return {
+    sourceBox = sourceBox,
+    sourceContainer = sourceContainer,
+    targetBox = targetBox,
+    targetContainer = targetContainer,
+    winsBox = winsBox,
+    elimBox = elimBox,
+    applyButton = applyButton,
+    revertButton = revertButton,
+    selfSourceBox = selfSourceBox,
+    selfSourceContainer = selfSourceContainer,
+    selfWinsBox = selfWinsBox,
+    selfElimBox = selfElimBox,
+    spoofButton = spoofButton,
+    selfRevertButton = selfRevertButton,
+    getChangeUserIdFrame = getChangeUserIdFrame,
+    getNamesOnlyFrame = getNamesOnlyFrame,
+    getChangeUserIdSelf = getChangeUserIdSelf,
+    getNamesOnlySelf = getNamesOnlySelf,
+    setStatus = setStatus
+}
