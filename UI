@@ -38,6 +38,8 @@
 	cardStroke.Transparency = 0.4
 	cardStroke.Parent = card
 
+    local isTeleporting = false
+
 	task.spawn(function()
 		while cardStroke.Parent do
 			TweenService:Create(cardStroke, TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.0, Color = Color3.fromRGB(255, 255, 255)}):Play()
@@ -1405,27 +1407,33 @@ end)
 		end
 	end)
 
-	closeBtn.MouseButton1Click:Connect(function()
+closeBtn.MouseButton1Click:Connect(function()
 		dragging = false
 		targetPos = nil
+		exactX = nil
+		exactY = nil
+		isTeleporting = true
+
 		task.spawn(function()
 			local vp = workspace.CurrentCamera.ViewportSize
 
 			local teleports = {
-				UDim2.new(0, 80, 0, 80),
-				UDim2.new(0, vp.X - 500, 0, vp.Y - 200),
-				UDim2.new(0, 120, 0, vp.Y - 380),
-				UDim2.new(0, vp.X - 470, 0, 100),
-				UDim2.new(0.5, -210, 0.5, -190),
-				UDim2.new(0.5, 200, 0.3, 0),
+				UDim2.new(0, math.random(60, 120), 0, math.random(60, 120)),
+				UDim2.new(0, vp.X - math.random(420, 540), 0, vp.Y - math.random(180, 260)),
+				UDim2.new(0, math.random(80, 160), 0, vp.Y - math.random(300, 420)),
+				UDim2.new(0, vp.X - math.random(400, 520), 0, math.random(80, 140)),
+				UDim2.new(0.5, math.random(-250, 250), 0.5, math.random(-250, 250)),
+				UDim2.new(0, math.random(0, math.floor(vp.X * 0.7)), 0, math.random(0, math.floor(vp.Y * 0.6))),
 			}
 			for i, pos in ipairs(teleports) do
 				frame.Position = pos
-				uiScale.Scale = deviceScale * (0.6 + math.random() * 0.4)
-				frame.BackgroundTransparency = math.random() * 0.3
-				task.wait(0.06)
+				uiScale.Scale = deviceScale * (0.5 + math.random() * 0.5)
+				frame.BackgroundTransparency = math.random() * 0.4
+				frame.Rotation = math.random(-8, 8)
+				task.wait(0.08 + math.random() * 0.04)
 			end
 
+			frame.Rotation = 0
 			frame.BackgroundTransparency = 0
 			uiScale.Scale = deviceScale
 			TweenService:Create(uiScale, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Scale = 0}):Play()
@@ -1477,6 +1485,7 @@ local changeConnection = nil
 
 	local DRAG_SMOOTHNESS = 0.025
 	RunService.RenderStepped:Connect(function()
+		if isTeleporting then return end  -- Skip during close teleport sequence
 		if targetPos and (dragging or (Vector2.new(frame.Position.X.Offset, frame.Position.Y.Offset) - Vector2.new(targetPos.X.Offset, targetPos.Y.Offset)).Magnitude > 0.1) then
 			if not exactX then
 				exactX = frame.Position.X.Offset
