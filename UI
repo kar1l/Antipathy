@@ -1288,12 +1288,12 @@ end)
 	local changeUserIdSwitchSelfContainer, getChangeUserIdSelf, setChangeUserIdSelf
 	local namesOnlySwitchSelfContainer, getNamesOnlySelf, setNamesOnlySelf
 
-	changeUserIdSwitchSelfContainer, getChangeUserIdSelf, setChangeUserIdSelf = createSwitch("Change UserId", 2, function(state)
+	changeUserIdSwitchSelfContainer, getChangeUserIdSelf, setChangeUserIdSelf = createSwitch(" Change UserId", 2, function(state)
 		if state and setNamesOnlySelf then setNamesOnlySelf(false) end
 	end)
 	changeUserIdSwitchSelfContainer.Parent = selfTabContent
 
-	namesOnlySwitchSelfContainer, getNamesOnlySelf, setNamesOnlySelf = createSwitch("Names Only", 2.5, function(state)
+	namesOnlySwitchSelfContainer, getNamesOnlySelf, setNamesOnlySelf = createSwitch(" Names Only", 2.5, function(state)
 		if state and setChangeUserIdSelf then setChangeUserIdSelf(false) end
 	end)
 	namesOnlySwitchSelfContainer.Parent = selfTabContent
@@ -1307,7 +1307,7 @@ end)
 	local selfStats = createStatsRow(5, selfTabContent, {
 		winsLabel = "Wins",
 		elimsLabel = "Eliminations",
-		winsPh = "EnterAmount",
+		winsPh = "Enter Amount",
 		elimsPh = "Enter Amount"
 	})
 	local selfWinsBox = selfStats.wins
