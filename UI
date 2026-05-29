@@ -1,5 +1,5 @@
 	local DEFAULT_ABILITY_IMAGES = {
-		infinity = "",
+		infinity = "rbxassetid://14852723022",
 	}
 
 	local COUNTRY_ALIASES = {
