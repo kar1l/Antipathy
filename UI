@@ -18,7 +18,7 @@
 		POL = "PL", POLAND = "PL", CZE = "CZ", CZECH = "CZ", CZECHIA = "CZ", SVK = "SK", SLOVAKIA = "SK", HUN = "HU", HUNGARY = "HU", ROU = "RO", ROM = "RO", ROMANIA = "RO",
 		BGR = "BG", BULGARIA = "BG", SRB = "RS", SERBIA = "RS", HRV = "HR", CROATIA = "HR", SVN = "SI", SLOVENIA = "SI", BIH = "BA", BOSNIA = "BA", BOSNIAHERZEGOVINA = "BA",
 		MKD = "MK", NORTHMACEDONIA = "MK", MACEDONIA = "MK", ALB = "AL", ALBANIA = "AL", GRC = "GR", GREECE = "GR", CYP = "CY", CYPRUS = "CY",
-		EST = "EE", ESTONIA = "EE", LVA = "LV", LATVIA = "LV", LTU = "LT", LITHUANIA = "LT", UKR = "UA", UKRAINE = "UA", RUS = "RU", RUSSIA = "RU", TUR = "TR", TURKEY = "TR", TÜRKIYE = "TR",
+		EST = "EE", ESTONIA = "EE", LVA = "LV", LATVIA = "LV", LTU = "LT", LITHUANIA = "LT", UKR = "UA", UKRAINE = "UA", RUS = "RU", RUSSIA = "RU", TUR = "TR", TURKEY = "TR", TURKIYE = "TR",
 
 		ISR = "IL", ISRAEL = "IL", SAU = "SA", SAUDI = "SA", SAUDIARABIA = "SA", ARE = "AE", UAE = "AE", EMIRATES = "AE", QAT = "QA", QATAR = "QA", KWT = "KW", KUWAIT = "KW",
 		BHR = "BH", BAHRAIN = "BH", OMN = "OM", OMAN = "OM", JOR = "JO", JORDAN = "JO", LBN = "LB", LEBANON = "LB", IRN = "IR", IRAN = "IR", IRQ = "IQ", IRAQ = "IQ",
