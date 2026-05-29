@@ -38,8 +38,6 @@
 	cardStroke.Transparency = 0.4
 	cardStroke.Parent = card
 
-    local isTeleporting = false
-
 	task.spawn(function()
 		while cardStroke.Parent do
 			TweenService:Create(cardStroke, TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.0, Color = Color3.fromRGB(255, 255, 255)}):Play()
@@ -353,7 +351,7 @@ end)
 
 local dirX = 1
 local dirY = 1
-local speed = 0.5
+local speed = 1
 local floatX = 0
 local floatY = 0
 
@@ -719,7 +717,7 @@ end)
 		return lbl
 	end
 
-	local function makeBox(placeholder, order, icon, wScale, wOff, isNum)
+	local function makeBox(placeholder, order, icon, wScale, wOff, isNum, isAlpha)
 		local container = Instance.new("Frame")
 		container.LayoutOrder = order
 		container.Size = UDim2.new(wScale or 1, wOff or 0, 0, 44)
@@ -764,6 +762,9 @@ end)
 		box:GetPropertyChangedSignal("Text"):Connect(function()
 			if isNum then
 				local filtered = box.Text:gsub("%D", "")
+				if box.Text ~= filtered then box.Text = filtered end
+			elseif isAlpha then
+				local filtered = box.Text:gsub("[^%a%s]", "")
 				if box.Text ~= filtered then box.Text = filtered end
 			end
 			if #box.Text > 20 then
@@ -873,7 +874,7 @@ end)
 	local function createStatsRow(layoutOrder, parent, config)
 		local container = Instance.new("Frame")
 		container.LayoutOrder = layoutOrder
-		container.Size = UDim2.new(1, 0, 0, 76)
+		container.Size = UDim2.new(1, 0, 0, 64)
 		container.BackgroundTransparency = 1
 		container.Parent = parent
 
@@ -896,9 +897,9 @@ end)
 		labelsLayout.SortOrder = Enum.SortOrder.LayoutOrder
 		labelsLayout.Parent = labelsFrame
 
-		local l1 = makeLabel(config.winsLabel, 1, "-", 0.5, -4)
+		local l1 = makeLabel(config.leftLabel, 1, "-", 0.5, -4)
 		l1.Parent = labelsFrame
-		local l2 = makeLabel(config.elimsLabel, 2, "-", 0.5, -4)
+		local l2 = makeLabel(config.rightLabel, 2, "-", 0.5, -4)
 		l2.Parent = labelsFrame
 
 		local inputsFrame = Instance.new("Frame")
@@ -914,12 +915,61 @@ end)
 		inputsLayout.SortOrder = Enum.SortOrder.LayoutOrder
 		inputsLayout.Parent = inputsFrame
 
-		local winsBox, winsCont = makeBox(config.winsPh, 1, "•", 0.5, -4, true)
-		winsCont.Parent = inputsFrame
-		local elimBox, elimCont = makeBox(config.elimsPh, 2, "•", 0.5, -4, true)
-		elimCont.Parent = inputsFrame
+		local isNumLeft = config.isNumLeft
+		if isNumLeft == nil then isNumLeft = true end
+		
+		local isNumRight = config.isNumRight
+		if isNumRight == nil then isNumRight = true end
+		
+		local isAlphaLeft = config.isAlphaLeft or false
+		local isAlphaRight = config.isAlphaRight or false
+		
+		local leftBox, leftCont = makeBox(config.leftPh, 1, "•", 0.5, -4, isNumLeft, isAlphaLeft)
+		leftCont.Parent = inputsFrame
+		local rightBox, rightCont = makeBox(config.rightPh, 2, "•", 0.5, -4, isNumRight, isAlphaRight)
+		rightCont.Parent = inputsFrame
 
-		return {wins = winsBox, elims = elimBox}
+		return {left = leftBox, right = rightBox}
+	end
+
+	local function createDivider(text, order, parent, yOffset)
+		local divider = Instance.new("Frame")
+		divider.LayoutOrder = order
+		divider.Size = UDim2.new(1, 0, 0, 10)
+		divider.BackgroundTransparency = 1
+		divider.Parent = parent
+
+		local content = Instance.new("Frame")
+		content.Size = UDim2.new(1, 0, 0, 24)
+		content.Position = UDim2.new(0, 0, 0, yOffset or 0)
+		content.BackgroundTransparency = 1
+		content.Parent = divider
+
+		local line1 = Instance.new("Frame")
+		line1.Size = UDim2.new(0.3, 0, 0, 1)
+		line1.Position = UDim2.new(0, 0, 0.5, 0)
+		line1.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+		line1.BorderSizePixel = 0
+		line1.Parent = content
+
+		local lbl = Instance.new("TextLabel")
+		lbl.Size = UDim2.new(0.4, 0, 1, 0)
+		lbl.Position = UDim2.new(0.3, 0, 0, 0)
+		lbl.BackgroundTransparency = 1
+		lbl.Text = text
+		lbl.TextColor3 = Color3.fromRGB(140, 140, 140)
+		lbl.Font = Enum.Font.GothamBold
+		lbl.TextSize = 12
+		lbl.Parent = content
+
+		local line2 = Instance.new("Frame")
+		line2.Size = UDim2.new(0.3, 0, 0, 1)
+		line2.Position = UDim2.new(0.7, 0, 0.5, 0)
+		line2.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+		line2.BorderSizePixel = 0
+		line2.Parent = content
+
+		return divider
 	end
 
 	local function makeTabButton(text, xOffset, isActive)
@@ -1065,8 +1115,19 @@ end)
 	body.Size = UDim2.new(1, 0, 1, -45)
 	body.Parent = frame
 
-	local function createTab(name, isVisible)
-		local tab = Instance.new("Frame")
+	local function createTab(name, isVisible, scrollable)
+		local tab
+		if scrollable then
+			tab = Instance.new("ScrollingFrame")
+			tab.ScrollBarThickness = 3
+			tab.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
+			tab.CanvasSize = UDim2.new(0, 0, 0, 0)
+			tab.AutomaticCanvasSize = Enum.AutomaticSize.Y
+			tab.ScrollingDirection = Enum.ScrollingDirection.Y
+			tab.ElasticBehavior = Enum.ElasticBehavior.Always
+		else
+			tab = Instance.new("Frame")
+		end
 		tab.Name = name
 		tab.BackgroundTransparency = 1
 		tab.BorderSizePixel = 0
@@ -1089,50 +1150,34 @@ end)
 		return tab
 	end
 
-	local frameTabContent = createTab("FrameTab", true)
+	local frameTabContent = createTab("FrameTab", true, true)
 	local selfTabContent  = createTab("SelfTab", false)
 	local statusFrame = Instance.new("Frame")
 	statusFrame.LayoutOrder = 1
-	statusFrame.Size = UDim2.new(1, 0, 0, 28)
-	statusFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+	statusFrame.Size = UDim2.new(1, 20, 0, 28)
+	statusFrame.Position = UDim2.new(0, -10, 0, 0)
+	statusFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	statusFrame.BackgroundTransparency = 1
 	statusFrame.BorderSizePixel = 0
 	statusFrame.ClipsDescendants = true
 	statusFrame.Parent = frameTabContent
 
-	local statusGradient = Instance.new("UIGradient")
-	statusGradient.Color = ColorSequence.new{
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(18, 18, 18)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 8, 8))
-	}
-	statusGradient.Rotation = 90
-	statusGradient.Parent = statusFrame
-
-	local statusCorner = Instance.new("UICorner")
-	statusCorner.CornerRadius = UDim.new(0, 10)
-	statusCorner.Parent = statusFrame
-
-	local statusStroke = Instance.new("UIStroke")
-	statusStroke.Color = Color3.fromRGB(80, 80, 80)
-	statusStroke.Thickness = 1
-	statusStroke.Transparency = 0.8
-	statusStroke.Parent = statusFrame
-
 	local status = Instance.new("TextLabel")
 	status.Name = "StatusLabel"
 	status.BackgroundTransparency = 1
-	status.Size = UDim2.new(1, -16, 1, 0)
-	status.Position = UDim2.new(0, 12, 0, 0)
+	status.Size = UDim2.new(1, 0, 1, 0)
+	status.Position = UDim2.new(0, 0, 0, 0)
 	status.Text = "Initialized."
 	status.TextColor3 = Color3.fromRGB(255, 255, 255)
 	status.Font = Enum.Font.GothamMedium
 	status.TextSize = 13
-	status.TextXAlignment = Enum.TextXAlignment.Left
+	status.TextXAlignment = Enum.TextXAlignment.Center
 	status.Parent = statusFrame
 
 	local progressBar = Instance.new("Frame")
 	progressBar.Name = "ProgressBar"
 	progressBar.Size = UDim2.new(0, 0, 0, 2)
-	progressBar.Position = UDim2.new(0, 12, 0, 20)
+	progressBar.Position = UDim2.new(0, 0, 1, -2)
 	progressBar.BackgroundColor3 = Color3.fromRGB(100, 200, 100)
 	progressBar.BorderSizePixel = 0
 	progressBar.Parent = statusFrame
@@ -1142,6 +1187,7 @@ end)
 	progressCorner.Parent = progressBar
 
 	local statusFrameSelf = statusFrame:Clone()
+	statusFrameSelf.LayoutOrder = 1
 	statusFrameSelf.Parent = selfTabContent
 	local statusSelf = statusFrameSelf:FindFirstChild("StatusLabel")
 	local progressBarSelf = statusFrameSelf:FindFirstChild("ProgressBar")
@@ -1246,117 +1292,202 @@ end)
 		return container, getState, setState
 	end
 
-	local changeUserIdSwitchFrameContainer, getChangeUserIdFrame, setChangeUserIdFrame
-	local namesOnlySwitchFrameContainer, getNamesOnlyFrame, setNamesOnlyFrame
+	createDivider("Player Profile", 2, frameTabContent, -14)
 
-	changeUserIdSwitchFrameContainer, getChangeUserIdFrame, setChangeUserIdFrame = createSwitch("Change UserId", 2, function(state)
-		if state and setNamesOnlyFrame then setNamesOnlyFrame(false) end
+	local frameChangeUserIdSwitch, getFrameChangeUserId, setFrameChangeUserId
+	local frameNamesOnlySwitch, getFrameNamesOnly, setFrameNamesOnly
+
+	frameChangeUserIdSwitch, getFrameChangeUserId, setFrameChangeUserId = createSwitch("Change UserId", 3, function(state)
+		if state and setFrameNamesOnly then setFrameNamesOnly(false) end
 	end)
-	changeUserIdSwitchFrameContainer.Parent = frameTabContent
+	frameChangeUserIdSwitch.Parent = frameTabContent
 
-	namesOnlySwitchFrameContainer, getNamesOnlyFrame, setNamesOnlyFrame = createSwitch("Names Only", 2.5, function(state)
-		if state and setChangeUserIdFrame then setChangeUserIdFrame(false) end
+	frameNamesOnlySwitch, getFrameNamesOnly, setFrameNamesOnly = createSwitch("Names Only", 4, function(state)
+		if state and setFrameChangeUserId then setFrameChangeUserId(false) end
 	end)
-	namesOnlySwitchFrameContainer.Parent = frameTabContent
+	frameNamesOnlySwitch.Parent = frameTabContent
 
-	local srcLabel = makeLabel("Source Player", 3, "-")
+	local srcLabel = makeLabel("Source Player", 5, "-")
 	srcLabel.Parent = frameTabContent
 
-	local sourceBox, sourceContainer = makeBox("Enter Source's UserID or Username ", 4, "• ")
+	local sourceBox, sourceContainer = makeBox("Enter Source's UserID or Username ", 6, "• ")
 	sourceContainer.Parent = frameTabContent
 
-	local tgtLabel = makeLabel("Target Player", 5, "-")
+	local tgtLabel = makeLabel("Target Player", 7, "-")
 	tgtLabel.Parent = frameTabContent
 
-	local targetBox, targetContainer = makeBox("Enter Target's UserID or Username", 6, "• ")
+	local targetBox, targetContainer = makeBox("Enter Target's UserID or Username", 8, "• ")
 	targetContainer.Parent = frameTabContent
 
-	local frameStats = createStatsRow(7, frameTabContent, {
-		winsLabel = "Wins",
-		elimsLabel = "Eliminations",
-		winsPh = "Enter Amount",
-		elimsPh = "Enter Amount"
+	local frameStats = createStatsRow(9, frameTabContent, {
+		leftLabel = "Wins",
+		rightLabel = "Eliminations",
+		leftPh = "Enter Amount",
+		rightPh = "Enter Amount"
 	})
-	local winsBox = frameStats.wins
-	local elimBox = frameStats.elims
+	local winsBox = frameStats.left
+	local elimBox = frameStats.right
 
-	local applyButton  = createStyledButton("Frame",          8, false, frameTabContent)
-	local revertButton = createStyledButton("Revert Changes", 9, true,  frameTabContent)
+	local applyButton  = createStyledButton("Frame",          10, false, frameTabContent)
+	local revertButton = createStyledButton("Revert Changes", 11, true,  frameTabContent)
+
+	createDivider("In-game Stats", 12, frameTabContent)
+
+	-- Profile Stats: Time + Games row
+	local timeGamesRow = createStatsRow(13, frameTabContent, {
+		leftLabel = "Time",
+		rightLabel = "Games",
+		leftPh = "Enter Time",
+		rightPh = "Enter Amount",
+		isNumLeft = true,
+		isNumRight = true
+	})
+	local timeBox = timeGamesRow.left
+	local gamesBox = timeGamesRow.right
+
+	-- Profile Stats: Win Streak + Most Valuable Item row
+	local winStreakMviRow = createStatsRow(14, frameTabContent, {
+		leftLabel = "Win Streak",
+		rightLabel = "Most Valuable Item",
+		leftPh = "Enter Amount",
+		rightPh = "Enter Item",
+		isNumLeft = true,
+		isNumRight = false,
+		isAlphaRight = true
+	})
+	local winStreakBox = winStreakMviRow.left
+	local mviBox = winStreakMviRow.right
+
+	-- Profile Stats: Most Used Ability + Ability Games row
+	local mostUsedRow = createStatsRow(15, frameTabContent, {
+		leftLabel = "Most Used",
+		rightLabel = "Ability Games",
+		leftPh = "Enter Ability",
+		rightPh = "Enter Amount",
+		isNumLeft = false,
+		isNumRight = true,
+		isAlphaLeft = true
+	})
+	local abilityBox = mostUsedRow.left
+	local abilityGamesBox = mostUsedRow.right
+
+	-- Profile Stats: RAP + Country row
+	local rapCountryRow = createStatsRow(16, frameTabContent, {
+		leftLabel = "RAP",
+		rightLabel = "Country",
+		leftPh = "Enter RAP",
+		rightPh = "Enter Country",
+		isNumLeft = true,
+		isNumRight = false,
+		isAlphaRight = true
+	})
+	local rapBox = rapCountryRow.left
+	local countryBox = rapCountryRow.right
+
+	-- Separate Frame & Revert for Profile Stats
+	local profileApplyButton  = createStyledButton("Frame Profile Stats",  17, false, frameTabContent)
+	local profileRevertButton = createStyledButton("Revert Profile Stats", 18, true,  frameTabContent)
 
 	local frameFooter = createFooter(frameTabContent)
+	frameFooter.LayoutOrder = 19
 
-	local changeUserIdSwitchSelfContainer, getChangeUserIdSelf, setChangeUserIdSelf
-	local namesOnlySwitchSelfContainer, getNamesOnlySelf, setNamesOnlySelf
+	createDivider("Self Profile", 2, selfTabContent, -14)
 
-	changeUserIdSwitchSelfContainer, getChangeUserIdSelf, setChangeUserIdSelf = createSwitch(" Change UserId", 2, function(state)
-		if state and setNamesOnlySelf then setNamesOnlySelf(false) end
+	local selfChangeUserIdSwitch, getSelfChangeUserId, setSelfChangeUserId
+	local selfNamesOnlySwitch, getSelfNamesOnly, setSelfNamesOnly
+
+	selfChangeUserIdSwitch, getSelfChangeUserId, setSelfChangeUserId = createSwitch("Change UserId", 3, function(state)
+		if state and setSelfNamesOnly then setSelfNamesOnly(false) end
 	end)
-	changeUserIdSwitchSelfContainer.Parent = selfTabContent
+	selfChangeUserIdSwitch.Parent = selfTabContent
 
-	namesOnlySwitchSelfContainer, getNamesOnlySelf, setNamesOnlySelf = createSwitch(" Names Only", 2.5, function(state)
-		if state and setChangeUserIdSelf then setChangeUserIdSelf(false) end
+	selfNamesOnlySwitch, getSelfNamesOnly, setSelfNamesOnly = createSwitch("Names Only", 4, function(state)
+		if state and setSelfChangeUserId then setSelfChangeUserId(false) end
 	end)
-	namesOnlySwitchSelfContainer.Parent = selfTabContent
+	selfNamesOnlySwitch.Parent = selfTabContent
 
-	local selfSrcLabel = makeLabel("Source Player", 3, "-")
+	local selfSrcLabel = makeLabel("Source Player", 5, "-")
 	selfSrcLabel.Parent = selfTabContent
 
-	local selfSourceBox, selfSourceContainer = makeBox("Enter Source UserID or Username ", 4, "•")
+	local selfSourceBox, selfSourceContainer = makeBox("Enter Source UserID or Username ", 6, "•")
 	selfSourceContainer.Parent = selfTabContent
 
-	local selfStats = createStatsRow(5, selfTabContent, {
-		winsLabel = "Wins",
-		elimsLabel = "Eliminations",
-		winsPh = "Enter Amount",
-		elimsPh = "Enter Amount"
+	local selfStats = createStatsRow(7, selfTabContent, {
+		leftLabel = "Wins",
+		rightLabel = "Eliminations",
+		leftPh = "Enter Amount",
+		rightPh = "Enter Amount"
 	})
-	local selfWinsBox = selfStats.wins
-	local selfElimBox = selfStats.elims
+	local selfWinsBox = selfStats.left
+	local selfElimBox = selfStats.right
 
-	local spoofButton      = createStyledButton("Spoof",          6, false, selfTabContent)
-	local selfRevertButton = createStyledButton("Revert Changes", 7, true,  selfTabContent)
+	-- Coins and Tokens fields (numbers only)
+	local selfCoinsTokensRow = createStatsRow(8, selfTabContent, {
+		leftLabel = "Coins",
+		rightLabel = "Tokens",
+		leftPh = "Enter Amount",
+		rightPh = "Enter Amount"
+	})
+	local selfCoinsBox = selfCoinsTokensRow.left
+	local selfTokensBox = selfCoinsTokensRow.right
+
+	local spoofButton      = createStyledButton("Spoof",          9, false, selfTabContent)
+	local selfRevertButton = createStyledButton("Revert Changes", 10, true,  selfTabContent)
 
 	local selfFooter = createFooter(selfTabContent)
-
-	local lastExpandedHeight = 500
+	selfFooter.LayoutOrder = 11
 
 	local function switchTab(showFrame)
 		local activeTab = showFrame and frameTabContent or selfTabContent
 		local inactiveTab = showFrame and selfTabContent or frameTabContent
 
+		-- Simple smooth fade transition
+		for _, child in ipairs(inactiveTab:GetChildren()) do
+			if child:IsA("GuiObject") then
+				child.Visible = true
+			end
+		end
 		inactiveTab.Visible = false
+
 		activeTab.Visible = true
-		activeTab.Size = UDim2.new(0.9, 0, 0.9, 0)
-		activeTab.Position = UDim2.new(0.05, 0, 0.05, 0)
-		TweenService:Create(activeTab, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			Size = UDim2.new(1, 0, 1, 0),
-			Position = UDim2.new(0, 0, 0, 0)
-		}):Play()
+		for _, child in ipairs(activeTab:GetChildren()) do
+			if child:IsA("GuiObject") then
+				local origTransparency = child.BackgroundTransparency
+				if origTransparency < 1 then
+					child.BackgroundTransparency = 1
+					TweenService:Create(child, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+						BackgroundTransparency = origTransparency
+					}):Play()
+				end
+				if child:IsA("TextLabel") or child:IsA("TextBox") or child:IsA("TextButton") then
+					local origTextT = child.TextTransparency
+					child.TextTransparency = 1
+					TweenService:Create(child, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+						TextTransparency = origTextT
+					}):Play()
+				end
+			end
+		end
 
 		frameTabBtn:SetAttribute("IsActiveTab", showFrame)
 		selfTabBtn:SetAttribute("IsActiveTab", not showFrame)
 
-		frameTabBtn.TextColor3 = showFrame and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(120, 120, 120)
-		selfTabBtn.TextColor3  = showFrame and Color3.fromRGB(120, 120, 120) or Color3.fromRGB(255, 255, 255)
+		TweenService:Create(frameTabBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
+			TextColor3 = showFrame and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(120, 120, 120)
+		}):Play()
+		TweenService:Create(selfTabBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
+			TextColor3 = showFrame and Color3.fromRGB(120, 120, 120) or Color3.fromRGB(255, 255, 255)
+		}):Play()
 
-		frameTabLine.BackgroundColor3 = showFrame and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(70, 70, 70)
-		selfTabLine.BackgroundColor3  = showFrame and Color3.fromRGB(70, 70, 70) or Color3.fromRGB(255, 255, 255)
+		TweenService:Create(frameTabLine, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
+			BackgroundColor3 = showFrame and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(70, 70, 70)
+		}):Play()
+		TweenService:Create(selfTabLine, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
+			BackgroundColor3 = showFrame and Color3.fromRGB(70, 70, 70) or Color3.fromRGB(255, 255, 255)
+		}):Play()
 
 		frameTabStroke.Transparency = showFrame and 0.3 or 1
 		selfTabStroke.Transparency  = showFrame and 1 or 0.3
-
-		if not isMinimized then
-			task.defer(function()
-				local layout = activeTab:FindFirstChildOfClass("UIListLayout")
-				if layout then
-					local newHeight = math.max(layout.AbsoluteContentSize.Y + 69, 150)
-					lastExpandedHeight = newHeight
-					TweenService:Create(frame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-						Size = UDim2.new(0, 420, 0, newHeight)
-					}):Play()
-				end
-			end)
-		end
 	end
 
 	frameTabBtn.MouseButton1Click:Connect(function() switchTab(true) end)
@@ -1369,7 +1500,7 @@ end)
 			for _, ht in ipairs(halftones) do ht.Visible = true end
 			task.spawn(function()
 				body.Visible = true
-				frame.Size = UDim2.new(0, 420, 0, lastExpandedHeight or 500)
+				frame.Size = UDim2.new(0, 420, 0, 500)
 				local s = deviceScale
 				
 				local origPos = frame.Position
@@ -1407,33 +1538,27 @@ end)
 		end
 	end)
 
-closeBtn.MouseButton1Click:Connect(function()
+	closeBtn.MouseButton1Click:Connect(function()
 		dragging = false
 		targetPos = nil
-		exactX = nil
-		exactY = nil
-		isTeleporting = true
-
 		task.spawn(function()
 			local vp = workspace.CurrentCamera.ViewportSize
 
 			local teleports = {
-				UDim2.new(0, math.random(60, 120), 0, math.random(60, 120)),
-				UDim2.new(0, vp.X - math.random(420, 540), 0, vp.Y - math.random(180, 260)),
-				UDim2.new(0, math.random(80, 160), 0, vp.Y - math.random(300, 420)),
-				UDim2.new(0, vp.X - math.random(400, 520), 0, math.random(80, 140)),
-				UDim2.new(0.5, math.random(-250, 250), 0.5, math.random(-250, 250)),
-				UDim2.new(0, math.random(0, math.floor(vp.X * 0.7)), 0, math.random(0, math.floor(vp.Y * 0.6))),
+				UDim2.new(0, 80, 0, 80),
+				UDim2.new(0, vp.X - 500, 0, vp.Y - 200),
+				UDim2.new(0, 120, 0, vp.Y - 380),
+				UDim2.new(0, vp.X - 470, 0, 100),
+				UDim2.new(0.5, -210, 0.5, -190),
+				UDim2.new(0.5, 200, 0.3, 0),
 			}
 			for i, pos in ipairs(teleports) do
 				frame.Position = pos
-				uiScale.Scale = deviceScale * (0.5 + math.random() * 0.5)
-				frame.BackgroundTransparency = math.random() * 0.4
-				frame.Rotation = math.random(-8, 8)
-				task.wait(0.08 + math.random() * 0.04)
+				uiScale.Scale = deviceScale * (0.6 + math.random() * 0.4)
+				frame.BackgroundTransparency = math.random() * 0.3
+				task.wait(0.06)
 			end
 
-			frame.Rotation = 0
 			frame.BackgroundTransparency = 0
 			uiScale.Scale = deviceScale
 			TweenService:Create(uiScale, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Scale = 0}):Play()
@@ -1485,7 +1610,6 @@ local changeConnection = nil
 
 	local DRAG_SMOOTHNESS = 0.025
 	RunService.RenderStepped:Connect(function()
-		if isTeleporting then return end  -- Skip during close teleport sequence
 		if targetPos and (dragging or (Vector2.new(frame.Position.X.Offset, frame.Position.Y.Offset) - Vector2.new(targetPos.X.Offset, targetPos.Y.Offset)).Magnitude > 0.1) then
 			if not exactX then
 				exactX = frame.Position.X.Offset
@@ -1514,11 +1638,24 @@ return {
     selfSourceContainer = selfSourceContainer,
     selfWinsBox = selfWinsBox,
     selfElimBox = selfElimBox,
+    selfCoinsBox = selfCoinsBox,
+    selfTokensBox = selfTokensBox,
     spoofButton = spoofButton,
     selfRevertButton = selfRevertButton,
-    getChangeUserIdFrame = getChangeUserIdFrame,
-    getNamesOnlyFrame = getNamesOnlyFrame,
-    getChangeUserIdSelf = getChangeUserIdSelf,
-    getNamesOnlySelf = getNamesOnlySelf,
-    setStatus = setStatus
+    getFrameChangeUserId = getFrameChangeUserId,
+    getFrameNamesOnly = getFrameNamesOnly,
+    getSelfChangeUserId = getSelfChangeUserId,
+    getSelfNamesOnly = getSelfNamesOnly,
+    setStatus = setStatus,
+    -- Profile Stats (Frame tab)
+    timeBox = timeBox,
+    gamesBox = gamesBox,
+    winStreakBox = winStreakBox,
+    mviBox = mviBox,
+    abilityBox = abilityBox,
+    abilityGamesBox = abilityGamesBox,
+    rapBox = rapBox,
+    countryBox = countryBox,
+    profileApplyButton = profileApplyButton,
+    profileRevertButton = profileRevertButton
 }
