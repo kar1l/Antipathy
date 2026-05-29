@@ -1,3 +1,36 @@
+	local DEFAULT_ABILITY_IMAGES = {
+		infinity = "",
+	}
+
+	local COUNTRY_ALIASES = {
+
+		USA = "US", US = "US", AMERICA = "US", UNITEDSTATES = "US", CAN = "CA", CANADA = "CA", MEX = "MX", MEXICO = "MX",
+
+		BRA = "BR", BRAZIL = "BR", ARG = "AR", ARGENTINA = "AR", CHI = "CL", CHILE = "CL", PER = "PE", PERU = "PE", COL = "CO", COLOMBIA = "CO",
+		URU = "UY", URUGUAY = "UY", BOL = "BO", BOLIVIA = "BO", ECU = "EC", ECUADOR = "EC", PAN = "PA", PANAMA = "PA",
+
+		UK = "GB", ENGLAND = "GB", BRITAIN = "GB", GREATBRITAIN = "GB", SCO = "GB", SCOTLAND = "GB", WAL = "GB", WALES = "GB", IRL = "IE", IRELAND = "IE",
+
+		FRA = "FR", FRANCE = "FR", ESP = "ES", SPAIN = "ES", PRT = "PT", PORTUGAL = "PT", GER = "DE", GERMANY = "DE", DEU = "DE", NLD = "NL", NETHERLANDS = "NL", HOLLAND = "NL",
+		BEL = "BE", BELGIUM = "BE", LUX = "LU", LUXEMBOURG = "LU", SWE = "SE", SWEDEN = "SE", NOR = "NO", NORWAY = "NO", FIN = "FI", FINLAND = "FI",
+		DEN = "DK", DNK = "DK", DENMARK = "DK", ICE = "IS", ICELAND = "IS", SWI = "CH", SWITZERLAND = "CH", AUT = "AT", AUSTRIA = "AT", ITA = "IT", ITALY = "IT",
+
+		POL = "PL", POLAND = "PL", CZE = "CZ", CZECH = "CZ", CZECHIA = "CZ", SVK = "SK", SLOVAKIA = "SK", HUN = "HU", HUNGARY = "HU", ROU = "RO", ROM = "RO", ROMANIA = "RO",
+		BGR = "BG", BULGARIA = "BG", SRB = "RS", SERBIA = "RS", HRV = "HR", CROATIA = "HR", SVN = "SI", SLOVENIA = "SI", BIH = "BA", BOSNIA = "BA", BOSNIAHERZEGOVINA = "BA",
+		MKD = "MK", NORTHMACEDONIA = "MK", MACEDONIA = "MK", ALB = "AL", ALBANIA = "AL", GRC = "GR", GREECE = "GR", CYP = "CY", CYPRUS = "CY",
+		EST = "EE", ESTONIA = "EE", LVA = "LV", LATVIA = "LV", LTU = "LT", LITHUANIA = "LT", UKR = "UA", UKRAINE = "UA", RUS = "RU", RUSSIA = "RU", TUR = "TR", TURKEY = "TR", TÜRKIYE = "TR",
+
+		ISR = "IL", ISRAEL = "IL", SAU = "SA", SAUDI = "SA", SAUDIARABIA = "SA", ARE = "AE", UAE = "AE", EMIRATES = "AE", QAT = "QA", QATAR = "QA", KWT = "KW", KUWAIT = "KW",
+		BHR = "BH", BAHRAIN = "BH", OMN = "OM", OMAN = "OM", JOR = "JO", JORDAN = "JO", LBN = "LB", LEBANON = "LB", IRN = "IR", IRAN = "IR", IRQ = "IQ", IRAQ = "IQ",
+
+		IND = "IN", INDIA = "IN", PAK = "PK", PAKISTAN = "PK", BGD = "BD", BANGLADESH = "BD", LKA = "LK", SRILANKA = "LK", NPL = "NP", NEPAL = "NP",
+		CHN = "CN", CHINA = "CN", HKG = "HK", HONGKONG = "HK", TWN = "TW", TAIWAN = "TW", JPN = "JP", JAPAN = "JP",
+		KOR = "KR", KOREA = "KR", SOUTHKOREA = "KR", SKOR = "KR", PRK = "KP", NORTHKOREA = "KP", NKOR = "KP",
+		PHL = "PH", PHILIPPINES = "PH", MYS = "MY", MALAYSIA = "MY", SGP = "SG", SINGAPORE = "SG", THA = "TH", THAILAND = "TH", VNM = "VN", VIETNAM = "VN", IDN = "ID", INDONESIA = "ID",
+
+		AUS = "AU", AUSTRALIA = "AU", NZL = "NZ", NZ = "NZ", NEWZEALAND = "NZ", FJI = "FJ", FIJI = "FJ",
+	}
+
 	local Players = game:GetService("Players")
 	local UserInputService = game:GetService("UserInputService")
 	local TweenService = game:GetService("TweenService")
@@ -351,7 +384,7 @@ end)
 
 local dirX = 1
 local dirY = 1
-local speed = 1
+local speed = 0.5
 local floatX = 0
 local floatY = 0
 
@@ -739,6 +772,72 @@ end)
 		box.TextXAlignment = Enum.TextXAlignment.Left
 		box.Parent = container
 
+		local isFocused = false
+		local isFlashing = false
+		local textOnFocus = ""
+
+		-- Optional autocomplete (used for Target box)
+		-- Shows a ghost completion while typing; press Enter to accept.
+		do
+			local ghost = Instance.new("TextLabel")
+			ghost.Name = "AutocompleteGhost"
+			ghost.BackgroundTransparency = 1
+			ghost.Size = UDim2.new(1, 0, 1, 0)
+			ghost.Position = UDim2.new(0, 0, 0, 0)
+			ghost.Font = box.Font
+			ghost.TextSize = box.TextSize
+			ghost.TextXAlignment = box.TextXAlignment
+			ghost.TextYAlignment = box.TextYAlignment
+			ghost.TextStrokeColor3 = box.TextStrokeColor3
+			ghost.TextStrokeTransparency = 0.7
+			ghost.TextColor3 = Color3.fromRGB(255, 255, 255)
+			ghost.TextTransparency = 0.6
+			ghost.ZIndex = box.ZIndex + 5
+			ghost.Visible = false
+			ghost.Parent = box
+
+
+			local function getSuggestion(prefix)
+				prefix = (prefix or ""):gsub("^%s+", ""):gsub("%s+$", "")
+				if #prefix < 2 then return nil end
+				local pfx = prefix:lower()
+				for _, p in ipairs(Players:GetPlayers()) do
+					if p ~= LocalPlayer then
+						local name = p.Name or ""
+						if name:lower():sub(1, #pfx) == pfx then return name end
+						local dn = p.DisplayName or ""
+						if dn:lower():sub(1, #pfx) == pfx then return dn end
+					end
+				end
+				return nil
+			end
+
+			local function updateGhost()
+				if not isFocused then ghost.Visible = false return end
+				local t = box.Text or ""
+				local sugg = getSuggestion(t)
+				if not sugg or sugg:lower() == t:lower() then
+					ghost.Visible = false
+					return
+				end
+				ghost.Text = sugg
+				ghost.Visible = true
+			end
+
+			box:GetPropertyChangedSignal("Text"):Connect(updateGhost)
+			box.Focused:Connect(updateGhost)
+			box.FocusLost:Connect(function(enterPressed)
+				ghost.Visible = false
+				if enterPressed then
+					local t = box.Text or ""
+					local sugg = getSuggestion(t)
+					if sugg and sugg:lower():sub(1, #t:lower()) == t:lower() then
+						box.Text = sugg
+					end
+				end
+			end)
+		end
+
 		local pad = Instance.new("UIPadding")
 		pad.PaddingLeft = UDim.new(0, 14)
 		pad.PaddingRight = UDim.new(0, 14)
@@ -755,10 +854,6 @@ end)
 		boxStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 		boxStroke.Parent = box
 
-		local isFocused = false
-		local isFlashing = false
-		local textOnFocus = ""
-
 		box:GetPropertyChangedSignal("Text"):Connect(function()
 			if isNum then
 				local filtered = box.Text:gsub("%D", "")
@@ -767,8 +862,8 @@ end)
 				local filtered = box.Text:gsub("[^%a%s]", "")
 				if box.Text ~= filtered then box.Text = filtered end
 			end
-			if #box.Text > 20 then
-				box.Text = box.Text:sub(1, 20)
+			if #box.Text > 30 then
+				box.Text = box.Text:sub(1, 30)
 			end
 			if isFocused and #box.Text > 0 then
 				task.spawn(function()
@@ -1333,24 +1428,22 @@ end)
 
 	createDivider("In-game Stats", 12, frameTabContent)
 
-	-- Profile Stats: Time + Games row
 	local timeGamesRow = createStatsRow(13, frameTabContent, {
-		leftLabel = "Time",
-		rightLabel = "Games",
-		leftPh = "Enter Time",
-		rightPh = "Enter Amount",
+		leftLabel = "Time Played",
+		rightLabel = "Games Played",
+		leftPh = "Enter Time Played",
+		rightPh = "Enter Games Played",
 		isNumLeft = true,
 		isNumRight = true
 	})
 	local timeBox = timeGamesRow.left
 	local gamesBox = timeGamesRow.right
 
-	-- Profile Stats: Win Streak + Most Valuable Item row
 	local winStreakMviRow = createStatsRow(14, frameTabContent, {
-		leftLabel = "Win Streak",
+		leftLabel = "Highest Win Streak",
 		rightLabel = "Most Valuable Item",
-		leftPh = "Enter Amount",
-		rightPh = "Enter Item",
+		leftPh = "Enter Streak",
+		rightPh = "Enter Item Name",
 		isNumLeft = true,
 		isNumRight = false,
 		isAlphaRight = true
@@ -1358,11 +1451,10 @@ end)
 	local winStreakBox = winStreakMviRow.left
 	local mviBox = winStreakMviRow.right
 
-	-- Profile Stats: Most Used Ability + Ability Games row
 	local mostUsedRow = createStatsRow(15, frameTabContent, {
 		leftLabel = "Most Used",
 		rightLabel = "Ability Games",
-		leftPh = "Enter Ability",
+		leftPh = "Enter Ability Name",
 		rightPh = "Enter Amount",
 		isNumLeft = false,
 		isNumRight = true,
@@ -1371,12 +1463,11 @@ end)
 	local abilityBox = mostUsedRow.left
 	local abilityGamesBox = mostUsedRow.right
 
-	-- Profile Stats: RAP + Country row
 	local rapCountryRow = createStatsRow(16, frameTabContent, {
 		leftLabel = "RAP",
 		rightLabel = "Country",
-		leftPh = "Enter RAP",
-		rightPh = "Enter Country",
+		leftPh = "Enter RAP Amount",
+		rightPh = "eg. 'USA', 'CA', 'BR'",
 		isNumLeft = true,
 		isNumRight = false,
 		isAlphaRight = true
@@ -1537,13 +1628,11 @@ end)
 			end)
 		end
 	end)
-
 	closeBtn.MouseButton1Click:Connect(function()
 		dragging = false
 		targetPos = nil
 		task.spawn(function()
 			local vp = workspace.CurrentCamera.ViewportSize
-
 			local teleports = {
 				UDim2.new(0, 80, 0, 80),
 				UDim2.new(0, vp.X - 500, 0, vp.Y - 200),
@@ -1558,7 +1647,6 @@ end)
 				frame.BackgroundTransparency = math.random() * 0.3
 				task.wait(0.06)
 			end
-
 			frame.BackgroundTransparency = 0
 			uiScale.Scale = deviceScale
 			TweenService:Create(uiScale, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.In), {Scale = 0}):Play()
@@ -1647,7 +1735,6 @@ return {
     getSelfChangeUserId = getSelfChangeUserId,
     getSelfNamesOnly = getSelfNamesOnly,
     setStatus = setStatus,
-    -- Profile Stats (Frame tab)
     timeBox = timeBox,
     gamesBox = gamesBox,
     winStreakBox = winStreakBox,
@@ -1657,5 +1744,7 @@ return {
     rapBox = rapBox,
     countryBox = countryBox,
     profileApplyButton = profileApplyButton,
-    profileRevertButton = profileRevertButton
+    profileRevertButton = profileRevertButton,
+    DEFAULT_ABILITY_IMAGES = DEFAULT_ABILITY_IMAGES,
+    COUNTRY_ALIASES = COUNTRY_ALIASES
 }
