@@ -1,6 +1,4 @@
-	local DEFAULT_ABILITY_IMAGES = {
-		infinity = "rbxassetid://14852723022",
-	}
+local DEFAULT_ABILITY_IMAGES = {}
 
 	local COUNTRY_ALIASES = {
 
@@ -38,6 +36,27 @@
 	local LocalPlayer = Players.LocalPlayer
 
 	local pg = LocalPlayer:WaitForChild("PlayerGui")
+
+	task.spawn(function()
+		local pStats = pg:WaitForChild("PersonalStats", 10)
+		if not pStats then return end
+		local pPage = pStats:WaitForChild("Page", 10)
+		if not pPage then return end
+		local pWins = pPage:WaitForChild("Windows", 10)
+		if not pWins then return end
+		local pStat = pWins:WaitForChild("Statistics", 10)
+		if not pStat then return end
+		local aStats = pStat:WaitForChild("AbilityStats", 10)
+		if not aStats then return end
+		
+		for _, child in ipairs(aStats:GetChildren()) do
+			local icon = child:FindFirstChild("Icon")
+			if icon and (icon:IsA("ImageLabel") or icon:IsA("ImageButton")) then
+				DEFAULT_ABILITY_IMAGES[child.Name] = icon.Image
+			end
+		end
+	end)
+
 	local loaderGui = Instance.new("ScreenGui")
 	loaderGui.Name = "AntipathyLoader"
 	loaderGui.ResetOnSpawn = false
@@ -276,11 +295,9 @@
 
 	local viewportSize = workspace.CurrentCamera.ViewportSize
 	local deviceScale = math.min(1, math.min(viewportSize.X / 1920, viewportSize.Y / 1080))
-
 	local uiScale = Instance.new("UIScale")
 	uiScale.Scale = deviceScale
 	uiScale.Parent = frame
-
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
 		local vp = workspace.CurrentCamera.ViewportSize
 		deviceScale = math.min(1, math.min(vp.X / 1920, vp.Y / 1080))
@@ -301,7 +318,6 @@
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 14)
 	corner.Parent = frame
-
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = Color3.fromRGB(80, 80, 80)
 	stroke.Thickness = 1
@@ -366,7 +382,6 @@ bgFooter.Parent = frame
 
 -- Wait for UI to properly render
 task.wait()
-
 task.spawn(function()
 	local baseText = "All Heil Antipathy & @hiies"
 	local glitchNames = {baseText, "All Heil Antipathy & @hiies", "A11 H3il Ant1p4##y & @hiies", "Hell H31l 4n+1path-y & @hiies", "A1l He1l A-A-AnT1PAth..y"}
@@ -387,9 +402,7 @@ local dirY = 1
 local speed = 0.5
 local floatX = 0
 local floatY = 0
-
 local lastTrail = 0
-
 task.spawn(function()
 	while bgFooter.Parent do
 		local frameSize = frame.AbsoluteSize
@@ -402,7 +415,6 @@ task.spawn(function()
 		
 		local maxX = frameSize.X - textSize.X
 		local maxY = frameSize.Y - textSize.Y
-		
 		floatX = floatX + (speed * dirX)
 		floatY = floatY + (speed * dirY)
 		local nX = floatX
@@ -750,7 +762,7 @@ end)
 		return lbl
 	end
 
-	local function makeBox(placeholder, order, icon, wScale, wOff, isNum, isAlpha)
+	local function makeBox(placeholder, order, icon, wScale, wOff, isNum, isAlpha, autoCompleteType)
 		local container = Instance.new("Frame")
 		container.LayoutOrder = order
 		container.Size = UDim2.new(wScale or 1, wOff or 0, 0, 44)
@@ -776,9 +788,7 @@ end)
 		local isFlashing = false
 		local textOnFocus = ""
 
-		-- Optional autocomplete (used for Target box)
-		-- Shows a ghost completion while typing; press Enter to accept.
-		do
+		if autoCompleteType then
 			local ghost = Instance.new("TextLabel")
 			ghost.Name = "AutocompleteGhost"
 			ghost.BackgroundTransparency = 1
@@ -796,17 +806,27 @@ end)
 			ghost.Visible = false
 			ghost.Parent = box
 
-
 			local function getSuggestion(prefix)
 				prefix = (prefix or ""):gsub("^%s+", ""):gsub("%s+$", "")
 				if #prefix < 2 then return nil end
 				local pfx = prefix:lower()
-				for _, p in ipairs(Players:GetPlayers()) do
-					if p ~= LocalPlayer then
-						local name = p.Name or ""
-						if name:lower():sub(1, #pfx) == pfx then return name end
-						local dn = p.DisplayName or ""
-						if dn:lower():sub(1, #pfx) == pfx then return dn end
+				
+				if autoCompleteType == "ability" then
+					for k, _ in pairs(DEFAULT_ABILITY_IMAGES) do
+						if k:lower():sub(1, #pfx) == pfx then return k end
+					end
+				elseif autoCompleteType == "country" then
+					for k, _ in pairs(COUNTRY_ALIASES) do
+						if k:lower():sub(1, #pfx) == pfx then return k end
+					end
+				elseif autoCompleteType == "player" then
+					for _, p in ipairs(Players:GetPlayers()) do
+						if p ~= LocalPlayer then
+							local name = p.Name or ""
+							if name:lower():sub(1, #pfx) == pfx then return name end
+							local dn = p.DisplayName or ""
+							if dn:lower():sub(1, #pfx) == pfx then return dn end
+						end
 					end
 				end
 				return nil
@@ -820,7 +840,7 @@ end)
 					ghost.Visible = false
 					return
 				end
-				ghost.Text = sugg
+				ghost.Text = t .. sugg:sub(#t + 1)
 				ghost.Visible = true
 			end
 
@@ -1019,9 +1039,9 @@ end)
 		local isAlphaLeft = config.isAlphaLeft or false
 		local isAlphaRight = config.isAlphaRight or false
 		
-		local leftBox, leftCont = makeBox(config.leftPh, 1, "•", 0.5, -4, isNumLeft, isAlphaLeft)
+		local leftBox, leftCont = makeBox(config.leftPh, 1, "•", 0.5, -4, isNumLeft, isAlphaLeft, config.autoCompleteLeft)
 		leftCont.Parent = inputsFrame
-		local rightBox, rightCont = makeBox(config.rightPh, 2, "•", 0.5, -4, isNumRight, isAlphaRight)
+		local rightBox, rightCont = makeBox(config.rightPh, 2, "•", 0.5, -4, isNumRight, isAlphaRight, config.autoCompleteRight)
 		rightCont.Parent = inputsFrame
 
 		return {left = leftBox, right = rightBox}
@@ -1405,13 +1425,13 @@ end)
 	local srcLabel = makeLabel("Source Player", 5, "-")
 	srcLabel.Parent = frameTabContent
 
-	local sourceBox, sourceContainer = makeBox("Enter Source's UserID or Username ", 6, "• ")
+	local sourceBox, sourceContainer = makeBox("Enter Source's UserID or Username ", 6, "• ", 1, 0, false, false, "player")
 	sourceContainer.Parent = frameTabContent
 
 	local tgtLabel = makeLabel("Target Player", 7, "-")
 	tgtLabel.Parent = frameTabContent
 
-	local targetBox, targetContainer = makeBox("Enter Target's UserID or Username", 8, "• ")
+	local targetBox, targetContainer = makeBox("Enter Target's UserID or Username", 8, "• ", 1, 0, false, false, "player")
 	targetContainer.Parent = frameTabContent
 
 	local frameStats = createStatsRow(9, frameTabContent, {
@@ -1458,7 +1478,8 @@ end)
 		rightPh = "Enter Amount",
 		isNumLeft = false,
 		isNumRight = true,
-		isAlphaLeft = true
+		isAlphaLeft = true,
+		autoCompleteLeft = "ability"
 	})
 	local abilityBox = mostUsedRow.left
 	local abilityGamesBox = mostUsedRow.right
@@ -1470,12 +1491,12 @@ end)
 		rightPh = "eg. 'USA', 'CA', 'BR'",
 		isNumLeft = true,
 		isNumRight = false,
-		isAlphaRight = true
+		isAlphaRight = true,
+		autoCompleteRight = "country"
 	})
 	local rapBox = rapCountryRow.left
 	local countryBox = rapCountryRow.right
 
-	-- Separate Frame & Revert for Profile Stats
 	local profileApplyButton  = createStyledButton("Frame Profile Stats",  17, false, frameTabContent)
 	local profileRevertButton = createStyledButton("Revert Profile Stats", 18, true,  frameTabContent)
 
@@ -1500,7 +1521,7 @@ end)
 	local selfSrcLabel = makeLabel("Source Player", 5, "-")
 	selfSrcLabel.Parent = selfTabContent
 
-	local selfSourceBox, selfSourceContainer = makeBox("Enter Source UserID or Username ", 6, "•")
+	local selfSourceBox, selfSourceContainer = makeBox("Enter Source UserID or Username ", 6, "•", 1, 0, false, false, "player")
 	selfSourceContainer.Parent = selfTabContent
 
 	local selfStats = createStatsRow(7, selfTabContent, {
@@ -1532,7 +1553,6 @@ end)
 		local activeTab = showFrame and frameTabContent or selfTabContent
 		local inactiveTab = showFrame and selfTabContent or frameTabContent
 
-		-- Simple smooth fade transition
 		for _, child in ipairs(inactiveTab:GetChildren()) do
 			if child:IsA("GuiObject") then
 				child.Visible = true
