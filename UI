@@ -1970,11 +1970,11 @@ do
 			isPoppedOut = false
 			popOutBtn.Text = "Pop Out"
 			placeholderLogLabel.Visible = false
+			consoleLogScroll.Parent = scrollContainer
 			if poppedWindow then
 				poppedWindow:Destroy()
 				poppedWindow = nil
 			end
-			consoleLogScroll.Parent = scrollContainer
 			consoleLogScroll.Position = UDim2.new(0, 0, 0, 0)
 			consoleLogScroll.Size = UDim2.new(1, 0, 1, 0)
 			consoleLogScroll.Visible = true
