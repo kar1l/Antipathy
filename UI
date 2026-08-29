@@ -65,28 +65,39 @@ local COL_GAP = 10
 local currentGlitchColor = Color3.fromRGB(255, 255, 255)
 local activeHoveredObjects = {}
 
--- Unified Glitch & Hover Animator (Single 25 FPS thread for zero CPU overhead)
+-- Unified Glitch & Hover Animator (Supports both corner tables and instance elements)
 task.spawn(function()
 	local glitchTgtColor = Color3.fromRGB(255, 255, 255)
 	local updateTimer = 0
 	while true do
-		task.wait(0.04)
-		updateTimer = updateTimer - 0.04
+		task.wait(0.035)
+		updateTimer = updateTimer - 0.035
 		if updateTimer <= 0 then
-			updateTimer = 0.25 + math.random() * 0.25
-			glitchTgtColor = Color3.fromRGB(math.random(140, 255), math.random(140, 255), math.random(140, 255))
+			updateTimer = 0.12 + math.random() * 0.18
+			local r = math.random(160, 255)
+			local g = math.random(160, 255)
+			local b = math.random(160, 255)
+			glitchTgtColor = Color3.fromRGB(r, g, b)
 		end
-		currentGlitchColor = currentGlitchColor:Lerp(glitchTgtColor, 0.2)
+		currentGlitchColor = currentGlitchColor:Lerp(glitchTgtColor, 0.3)
+
 		for obj, kind in pairs(activeHoveredObjects) do
-			if obj and obj.Parent then
-				if kind == "corners" then
-					for _, c in ipairs(obj) do
-						if c and c.Parent then c.BackgroundColor3 = currentGlitchColor end
+			if kind == "corners" and typeof(obj) == "table" then
+				local hasAny = false
+				for _, c in ipairs(obj) do
+					if c and c.Parent then
+						c.BackgroundColor3 = currentGlitchColor
+						hasAny = true
 					end
-				elseif kind == "text" then
+				end
+				if not hasAny then activeHoveredObjects[obj] = nil end
+			elseif typeof(obj) == "Instance" and obj.Parent then
+				if kind == "text" then
 					obj.TextColor3 = currentGlitchColor
 				elseif kind == "stroke" then
 					obj.Color = currentGlitchColor
+				elseif kind == "bg" then
+					obj.BackgroundColor3 = currentGlitchColor
 				end
 			else
 				activeHoveredObjects[obj] = nil
@@ -945,10 +956,11 @@ local function createTooltip(parent, text, tag, posX, posY)
 		badgeLbl.TextColor3 = currentGlitchColor
 		tip.Visible = true
 		TweenService:Create(icon, TI_FAST, {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
-		for _, c in ipairs(iconCorners) do TweenService:Create(c, TI_FAST, {BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play() end
+		activeHoveredObjects[iconCorners] = "corners"
 	end)
 	icon.MouseLeave:Connect(function()
 		tip.Visible = false
+		activeHoveredObjects[iconCorners] = nil
 		TweenService:Create(icon, TI_FAST, {TextColor3 = Color3.fromRGB(160, 160, 170)}):Play()
 		for _, c in ipairs(iconCorners) do TweenService:Create(c, TI_FAST, {BackgroundColor3 = Color3.fromRGB(120, 120, 130)}):Play() end
 	end)
@@ -1462,7 +1474,9 @@ local function addLog(msg, color)
 	line.Parent = consoleLogScroll
 
 	task.defer(function()
-		consoleLogScroll.CanvasPosition = Vector2.new(0, 99999)
+		if consoleLogScroll and consoleLogScroll.Parent then
+			consoleLogScroll.CanvasPosition = Vector2.new(0, 99999)
+		end
 	end)
 end
 
@@ -1643,7 +1657,7 @@ do
 	selfBtnLayout.Padding = UDim.new(0, 8)
 	selfBtnLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	selfBtnLayout.Parent = selfBtnRow
-	local spoofButton = makeThemedCardBtn("Spoof Appearance & Stats", 1, selfBtnRow, 2)
+	local spoofButton = makeThemedCardBtn("Spoof Stats", 1, selfBtnRow, 2)
 	local selfRevertButton = makeThemedCardBtn("Revert Changes", 2, selfBtnRow, 2, "danger")
 
 	Exports.selfSourceBox = selfSourceBox
@@ -1660,7 +1674,7 @@ end
 
 -- ================= TAB 3: PROFILE =================
 do
-	createDivider("Profile Stats Framing Tab", 1, tabs.Profile)
+	createDivider("Profile Stats Tab", 1, tabs.Profile)
 	local _, profileCols = createColumnLayout(tabs.Profile, 3, COL_GAP, 2)
 
 	local profDetailsSec, _, updateProfDetailsStatus = createSection("Profile Stats", 1, profileCols[1], {
@@ -1966,8 +1980,19 @@ do
 			consoleLogScroll.Visible = true
 			consoleLogScroll.ZIndex = 12
 			for _, ch in ipairs(consoleLogScroll:GetChildren()) do
-				if ch:IsA("TextLabel") then ch.ZIndex = 13 end
+				if ch:IsA("TextLabel") then
+					ch.ZIndex = 13
+					ch.Visible = true
+					ch.TextTransparency = 0
+				end
 			end
+			task.defer(function()
+				if consoleLogScroll and consoleLogScroll.Parent then
+					consoleLogScroll.CanvasPosition = Vector2.new(0, 0)
+					task.wait(0.02)
+					consoleLogScroll.CanvasPosition = Vector2.new(0, 99999)
+				end
+			end)
 		end
 	end
 
