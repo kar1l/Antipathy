@@ -65,12 +65,12 @@ local COL_GAP = 10
 local currentGlitchColor = Color3.fromRGB(255, 255, 255)
 local activeHoveredObjects = {}
 
--- Unified Glitch & Hover Animator (Replaces dozens of individual Heartbeat loops)
+-- Unified Glitch & Hover Animator (Single 25 FPS thread for zero CPU overhead)
 task.spawn(function()
 	local glitchTgtColor = Color3.fromRGB(255, 255, 255)
 	local updateTimer = 0
 	while true do
-		task.wait(0.04) -- 25 FPS update is buttery smooth and takes <0.1% CPU
+		task.wait(0.04)
 		updateTimer = updateTimer - 0.04
 		if updateTimer <= 0 then
 			updateTimer = 0.25 + math.random() * 0.25
@@ -273,15 +273,15 @@ task.spawn(function()
 	local gn = {"All Heil Antipathy & @hiies", "Why, why, why?", "A11 H3il Ant1p4##y & @hiies", "Hell H31l 4n+1path-y & @hiies", "A1l He1l A-A-AnT1PAth..y"}
 	while bgFooter.Parent do
 		if isClosingAnimation then break end
-		if math.random(1, 6) == 1 then
-			for _ = 1, math.random(4, 8) do
+		if math.random(1, 7) == 1 then
+			for _ = 1, math.random(3, 6) do
 				if isClosingAnimation then break end
 				bgFooter.Text = gn[math.random(#gn)]
-				task.wait(0.03)
+				task.wait(0.035)
 			end
 			if not isClosingAnimation then bgFooter.Text = bt end
 		end
-		task.wait(0.1 + math.random() * 0.1)
+		task.wait(0.1 + math.random() * 0.15)
 	end
 end)
 
@@ -340,7 +340,7 @@ task.spawn(function()
 
 			bgFooter.Position = UDim2.new(0, math.floor(bfx), 0, math.floor(bfy))
 		end
-		task.wait(0.033) -- Smooth 30 FPS update
+		task.wait(0.033)
 	end
 end)
 
@@ -973,6 +973,7 @@ local function createSection(sectionTitle, order, parent, opts)
 	section.BorderSizePixel = 0
 	section.ZIndex = 10
 	section.ClipsDescendants = not isExpanded
+	section:SetAttribute("IsExpanded", isExpanded)
 	section.Parent = parent
 
 	local sGrad = Instance.new("UIGradient")
@@ -1100,10 +1101,20 @@ local function createSection(sectionTitle, order, parent, opts)
 	settingsLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	settingsLayout.Parent = settingsFrame
 
+	local function updateSectionHeight()
+		local contentH = settingsLayout.AbsoluteContentSize.Y
+		settingsFrame.Size = UDim2.new(1, -16, 0, contentH)
+		if isExpanded or section:GetAttribute("IsExpanded") then
+			section.Size = UDim2.new(1, 0, 0, HEADER_H + 8 + contentH + 12)
+			section.ClipsDescendants = false
+		end
+	end
+
 	local function setExpanded(expand)
 		isExpanded = expand
 		section:SetAttribute("IsExpanded", isExpanded)
-		local targetH = isExpanded and (HEADER_H + 8 + settingsLayout.AbsoluteContentSize.Y + 12) or HEADER_H
+		local contentH = settingsLayout.AbsoluteContentSize.Y
+		local targetH = isExpanded and (HEADER_H + 8 + contentH + 12) or HEADER_H
 		arrow.Text = isExpanded and "▲" or "▼"
 		if not isExpanded then section.ClipsDescendants = true end
 		local tween = TweenService:Create(section, TI_EXPAND, {Size = UDim2.new(1, 0, 0, targetH)})
@@ -1117,14 +1128,7 @@ local function createSection(sectionTitle, order, parent, opts)
 		TweenService:Create(arrow, TweenInfo.new(0.15), {TextColor3 = isExpanded and Color3.fromRGB(220, 220, 220) or Color3.fromRGB(100, 100, 105)}):Play()
 	end
 
-	settingsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		local contentH = settingsLayout.AbsoluteContentSize.Y
-		settingsFrame.Size = UDim2.new(1, -16, 0, contentH)
-		if isExpanded or section:GetAttribute("IsExpanded") then
-			section.Size = UDim2.new(1, 0, 0, HEADER_H + 8 + contentH + 12)
-			section.ClipsDescendants = false
-		end
-	end)
+	settingsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSectionHeight)
 
 	header.MouseButton1Click:Connect(function() setExpanded(not isExpanded) end)
 
@@ -1799,10 +1803,17 @@ do
 		defaultExpanded = true
 	})
 
+	local scrollContainer = Instance.new("Frame")
+	scrollContainer.Name = "ScrollContainer"
+	scrollContainer.LayoutOrder = 1
+	scrollContainer.Size = UDim2.new(1, 0, 0, 260)
+	scrollContainer.BackgroundTransparency = 1
+	scrollContainer.ZIndex = 12
+	scrollContainer.Parent = logSec
+
 	consoleLogScroll = Instance.new("ScrollingFrame")
 	consoleLogScroll.Name = "ConsoleLogScroll"
-	consoleLogScroll.LayoutOrder = 1
-	consoleLogScroll.Size = UDim2.new(1, 0, 0, 260)
+	consoleLogScroll.Size = UDim2.new(1, 0, 1, 0)
 	consoleLogScroll.BackgroundColor3 = Color3.fromRGB(6, 6, 8)
 	consoleLogScroll.BorderSizePixel = 0
 	consoleLogScroll.ScrollBarThickness = 3
@@ -1812,7 +1823,7 @@ do
 	consoleLogScroll.ScrollingDirection = Enum.ScrollingDirection.Y
 	consoleLogScroll.ZIndex = 12
 	consoleLogScroll.Visible = true
-	consoleLogScroll.Parent = logSec
+	consoleLogScroll.Parent = scrollContainer
 	Instance.new("UICorner", consoleLogScroll).CornerRadius = UDim.new(0, 5)
 	addCornerBorder(consoleLogScroll, Color3.fromRGB(50, 50, 60), 1, 5)
 
@@ -1825,6 +1836,17 @@ do
 	consoleLayout.Padding = UDim.new(0, 4)
 	consoleLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	consoleLayout.Parent = consoleLogScroll
+
+	local placeholderLogLabel = Instance.new("TextLabel")
+	placeholderLogLabel.Size = UDim2.new(1, 0, 1, 0)
+	placeholderLogLabel.BackgroundTransparency = 1
+	placeholderLogLabel.Text = "[Terminal is currently popped out]"
+	placeholderLogLabel.TextColor3 = Color3.fromRGB(100, 100, 115)
+	placeholderLogLabel.Font = Enum.Font.GothamMedium
+	placeholderLogLabel.TextSize = 13
+	placeholderLogLabel.Visible = false
+	placeholderLogLabel.ZIndex = 12
+	placeholderLogLabel.Parent = scrollContainer
 
 	local logBtnRow = Instance.new("Frame")
 	logBtnRow.LayoutOrder = 2
@@ -1851,16 +1873,6 @@ do
 
 	local poppedWindow = nil
 	local isPoppedOut = false
-	local placeholderLogLabel = Instance.new("TextLabel")
-	placeholderLogLabel.Size = UDim2.new(1, 0, 0, 40)
-	placeholderLogLabel.BackgroundTransparency = 1
-	placeholderLogLabel.Text = "[Terminal is currently popped out]"
-	placeholderLogLabel.TextColor3 = Color3.fromRGB(100, 100, 115)
-	placeholderLogLabel.Font = Enum.Font.GothamMedium
-	placeholderLogLabel.TextSize = 12
-	placeholderLogLabel.Visible = false
-	placeholderLogLabel.LayoutOrder = 1
-	placeholderLogLabel.Parent = logSec
 
 	local function togglePopOut()
 		if not isPoppedOut then
@@ -1948,25 +1960,14 @@ do
 				poppedWindow:Destroy()
 				poppedWindow = nil
 			end
-			consoleLogScroll.Parent = logSec
-			consoleLogScroll.LayoutOrder = 1
+			consoleLogScroll.Parent = scrollContainer
 			consoleLogScroll.Position = UDim2.new(0, 0, 0, 0)
-			consoleLogScroll.Size = UDim2.new(1, 0, 0, 260)
+			consoleLogScroll.Size = UDim2.new(1, 0, 1, 0)
 			consoleLogScroll.Visible = true
 			consoleLogScroll.ZIndex = 12
 			for _, ch in ipairs(consoleLogScroll:GetChildren()) do
 				if ch:IsA("TextLabel") then ch.ZIndex = 13 end
 			end
-			task.defer(function()
-				local ch = logSec:FindFirstChildWhichIsA("UIListLayout")
-				if ch then
-					logSec.Size = UDim2.new(1, -16, 0, ch.AbsoluteContentSize.Y)
-					if logSecFrame and logSecFrame:GetAttribute("IsExpanded") then
-						logSecFrame.Size = UDim2.new(1, 0, 0, 54 + 8 + ch.AbsoluteContentSize.Y + 12)
-						logSecFrame.ClipsDescendants = false
-					end
-				end
-			end)
 		end
 	end
 
