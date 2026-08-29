@@ -1074,7 +1074,7 @@ local function createSection(sectionTitle, order, parent, opts)
 		tipHolder.Parent = header
 
 		local function syncTipPos()
-			tipHolder.Position = UDim2.new(0, titleLbl.AbsoluteSize.X + 22, 0, 9)
+			tipHolder.Position = UDim2.new(0, titleLbl.AbsoluteSize.X + 32, 0, 8)
 		end
 		titleLbl:GetPropertyChangedSignal("AbsoluteSize"):Connect(syncTipPos)
 		task.defer(syncTipPos)
@@ -1905,7 +1905,7 @@ do
 	consoleLogScroll.ZIndex = 12
 	consoleLogScroll.Parent = logSec
 	Instance.new("UICorner", consoleLogScroll).CornerRadius = UDim.new(0, 5)
-	addCornerBorder(consoleLogScroll, Color3.fromRGB(50, 50, 60), 1, 5)
+	local consoleCorners = addCornerBorder(consoleLogScroll, Color3.fromRGB(50, 50, 60), 1, 5)
 
 	local consolePad = Instance.new("UIPadding")
 	consolePad.PaddingTop = UDim.new(0, 6); consolePad.PaddingBottom = UDim.new(0, 6)
@@ -1917,8 +1917,21 @@ do
 	consoleLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	consoleLayout.Parent = consoleLogScroll
 
-	local clearLogBtn = makeThemedCardBtn("Clear Logs", 2, logSec, 1)
-	clearLogBtn.Size = UDim2.new(1, 0, 0, 28)
+	local logBtnRow = Instance.new("Frame")
+	logBtnRow.LayoutOrder = 2
+	logBtnRow.Size = UDim2.new(1, 0, 0, 28)
+	logBtnRow.BackgroundTransparency = 1
+	logBtnRow.ZIndex = 11
+	logBtnRow.Parent = logSec
+	local logBtnLayout = Instance.new("UIListLayout")
+	logBtnLayout.FillDirection = Enum.FillDirection.Horizontal
+	logBtnLayout.Padding = UDim.new(0, 8)
+	logBtnLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	logBtnLayout.Parent = logBtnRow
+
+	local clearLogBtn = makeThemedCardBtn("Clear Logs", 1, logBtnRow, 2)
+	local popOutBtn = makeThemedCardBtn("Pop Out", 2, logBtnRow, 2)
+
 	clearLogBtn.MouseButton1Click:Connect(function()
 		for _, ch in ipairs(consoleLogScroll:GetChildren()) do
 			if ch:IsA("TextLabel") then ch:Destroy() end
@@ -1926,6 +1939,112 @@ do
 		consoleLogCount = 0
 		addLog("Logs cleared", Color3.fromRGB(140, 140, 140))
 	end)
+
+	local poppedWindow = nil
+	local isPoppedOut = false
+	local placeholderLogLabel = Instance.new("TextLabel")
+	placeholderLogLabel.Size = UDim2.new(1, 0, 0, 40)
+	placeholderLogLabel.BackgroundTransparency = 1
+	placeholderLogLabel.Text = "[Terminal is currently popped out]"
+	placeholderLogLabel.TextColor3 = Color3.fromRGB(100, 100, 115)
+	placeholderLogLabel.Font = Enum.Font.GothamMedium
+	placeholderLogLabel.TextSize = 12
+	placeholderLogLabel.Visible = false
+	placeholderLogLabel.LayoutOrder = 1
+	placeholderLogLabel.Parent = logSec
+
+	local function togglePopOut()
+		if not isPoppedOut then
+			isPoppedOut = true
+			popOutBtn.Text = "Pop In"
+			placeholderLogLabel.Visible = true
+
+			poppedWindow = Instance.new("Frame")
+			poppedWindow.Name = "AntipathyTerminalPopup"
+			poppedWindow.Size = UDim2.new(0, 480, 0, 320)
+			poppedWindow.Position = UDim2.new(0.5, 40, 0.5, -160)
+			poppedWindow.BackgroundColor3 = Color3.fromRGB(8, 8, 12)
+			poppedWindow.BorderSizePixel = 0
+			poppedWindow.ZIndex = 5000
+			poppedWindow.Parent = screenGui
+			Instance.new("UICorner", poppedWindow).CornerRadius = UDim.new(0, 8)
+			addCornerBorder(poppedWindow, Color3.fromRGB(200, 200, 220), 1.5, 12)
+
+			local popTopbar = Instance.new("Frame")
+			popTopbar.Size = UDim2.new(1, 0, 0, 34)
+			popTopbar.BackgroundColor3 = Color3.fromRGB(14, 14, 18)
+			popTopbar.BorderSizePixel = 0
+			popTopbar.ZIndex = 5001
+			popTopbar.Parent = poppedWindow
+			Instance.new("UICorner", popTopbar).CornerRadius = UDim.new(0, 8)
+
+			local popTitle = Instance.new("TextLabel")
+			popTitle.BackgroundTransparency = 1
+			popTitle.Position = UDim2.new(0, 12, 0, 0)
+			popTitle.Size = UDim2.new(0.6, 0, 1, 0)
+			popTitle.Text = "Antipathy Terminal"
+			popTitle.Font = Enum.Font.GothamBold
+			popTitle.TextSize = 13
+			popTitle.TextColor3 = Color3.fromRGB(240, 240, 245)
+			popTitle.TextXAlignment = Enum.TextXAlignment.Left
+			popTitle.ZIndex = 5002
+			popTitle.Parent = popTopbar
+
+			local popDockBtn = Instance.new("TextButton")
+			popDockBtn.Size = UDim2.new(0, 68, 0, 22)
+			popDockBtn.Position = UDim2.new(1, -76, 0.5, -11)
+			popDockBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+			popDockBtn.Text = "Pop In"
+			popDockBtn.Font = Enum.Font.GothamBold
+			popDockBtn.TextSize = 11
+			popDockBtn.TextColor3 = Color3.fromRGB(220, 220, 230)
+			popDockBtn.AutoButtonColor = false
+			popDockBtn.ZIndex = 5003
+			popDockBtn.Parent = popTopbar
+			Instance.new("UICorner", popDockBtn).CornerRadius = UDim.new(0, 4)
+			addCornerBorder(popDockBtn, Color3.fromRGB(70, 70, 80), 1, 4)
+
+			popDockBtn.MouseButton1Click:Connect(togglePopOut)
+
+			local pDragging = false
+			local pDragStart, pStartPos
+			popTopbar.InputBegan:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 then
+					pDragging = true
+					pDragStart = input.Position
+					pStartPos = poppedWindow.Position
+				end
+			end)
+			UserInputService.InputChanged:Connect(function(input)
+				if pDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+					local d = input.Position - pDragStart
+					poppedWindow.Position = UDim2.new(pStartPos.X.Scale, pStartPos.X.Offset + d.X, pStartPos.Y.Scale, pStartPos.Y.Offset + d.Y)
+				end
+			end)
+			UserInputService.InputEnded:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 then
+					pDragging = false
+				end
+			end)
+
+			consoleLogScroll.Parent = poppedWindow
+			consoleLogScroll.Position = UDim2.new(0, 8, 0, 40)
+			consoleLogScroll.Size = UDim2.new(1, -16, 1, -48)
+		else
+			isPoppedOut = false
+			popOutBtn.Text = "Pop Out"
+			placeholderLogLabel.Visible = false
+			if poppedWindow then
+				poppedWindow:Destroy()
+				poppedWindow = nil
+			end
+			consoleLogScroll.Parent = logSec
+			consoleLogScroll.Position = UDim2.new(0, 0, 0, 0)
+			consoleLogScroll.Size = UDim2.new(1, 0, 0, 260)
+		end
+	end
+
+	popOutBtn.MouseButton1Click:Connect(togglePopOut)
 
 	local statCol = Instance.new("Frame")
 	statCol.Size = UDim2.new(1/3, -COL_GAP*2/3, 0, 0)
@@ -2081,7 +2200,7 @@ closeBtn.MouseButton1Click:Connect(function()
 					TweenService:Create(child, TI_SYNC, {TextTransparency = 1, BackgroundTransparency = 1}):Play()
 				elseif child:IsA("ImageLabel") or child:IsA("ImageButton") then
 					TweenService:Create(child, TI_SYNC, {ImageTransparency = 1, BackgroundTransparency = 1}):Play()
-				elseif child:IsA("Frame") or child:IsA("Scrollingframe") or child:IsA("CanvasGroup") then
+				elseif child:IsA("Frame") or child:IsA("ScrollingFrame") or child:IsA("CanvasGroup") then
 					TweenService:Create(child, TI_SYNC, {BackgroundTransparency = 1}):Play()
 				elseif child:IsA("UIStroke") then
 					TweenService:Create(child, TI_SYNC, {Transparency = 1}):Play()
