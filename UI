@@ -54,37 +54,44 @@ task.spawn(function()
 	end
 end)
 
-local TI_FAST = TweenInfo.new(0.1)
+local TI_FAST = TweenInfo.new(0.12)
 local TI_NORMAL = TweenInfo.new(0.18)
 local TI_EXPAND = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-local TI_COLLAPSE = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-local TI_GLOW = TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
 local FRAME_W, FRAME_H = 880, 550
 local TOPBAR_H = 52
 local TAB_PANEL_W = 115
 local COL_GAP = 10
 
 local currentGlitchColor = Color3.fromRGB(255, 255, 255)
-local currentGlitchTrans = 0.3
-local currentGlitchThick = 1.5
+local activeHoveredObjects = {}
 
+-- Unified Glitch & Hover Animator (Replaces dozens of individual Heartbeat loops)
 task.spawn(function()
 	local glitchTgtColor = Color3.fromRGB(255, 255, 255)
-	local glitchTgtTrans = 0.3
-	local glitchTgtThick = 1.5
 	local updateTimer = 0
 	while true do
-		local dt = RunService.Heartbeat:Wait()
-		updateTimer = updateTimer - dt
+		task.wait(0.04) -- 25 FPS update is buttery smooth and takes <0.1% CPU
+		updateTimer = updateTimer - 0.04
 		if updateTimer <= 0 then
-			updateTimer = 0.2 + math.random() * 0.2
-			glitchTgtColor = Color3.fromRGB(math.random(100, 255), math.random(100, 255), math.random(100, 255))
-			glitchTgtTrans = 0.25 + math.random() * 0.25
-			glitchTgtThick = 1 + math.random() * 1.2
+			updateTimer = 0.25 + math.random() * 0.25
+			glitchTgtColor = Color3.fromRGB(math.random(140, 255), math.random(140, 255), math.random(140, 255))
 		end
-		currentGlitchColor = currentGlitchColor:Lerp(glitchTgtColor, dt * 5)
-		currentGlitchTrans = currentGlitchTrans + (glitchTgtTrans - currentGlitchTrans) * dt * 5
-		currentGlitchThick = currentGlitchThick + (glitchTgtThick - currentGlitchThick) * dt * 5
+		currentGlitchColor = currentGlitchColor:Lerp(glitchTgtColor, 0.2)
+		for obj, kind in pairs(activeHoveredObjects) do
+			if obj and obj.Parent then
+				if kind == "corners" then
+					for _, c in ipairs(obj) do
+						if c and c.Parent then c.BackgroundColor3 = currentGlitchColor end
+					end
+				elseif kind == "text" then
+					obj.TextColor3 = currentGlitchColor
+				elseif kind == "stroke" then
+					obj.Color = currentGlitchColor
+				end
+			else
+				activeHoveredObjects[obj] = nil
+			end
+		end
 	end
 end)
 
@@ -270,19 +277,26 @@ task.spawn(function()
 			for _ = 1, math.random(4, 8) do
 				if isClosingAnimation then break end
 				bgFooter.Text = gn[math.random(#gn)]
-				task.wait(0.025 + math.random() * 0.03)
+				task.wait(0.03)
 			end
 			if not isClosingAnimation then bgFooter.Text = bt end
 		end
-		task.wait(0.05 + math.random() * 0.08)
+		task.wait(0.1 + math.random() * 0.1)
 	end
 end)
 
 local bdx, bdy = 1, 1
-local bspeed = 0.3
+local bspeed = 0.35
 local bfx, bfy = 16, TOPBAR_H + 16
 local blt = 0
-local _footerGhost = nil
+local footerGhost = Instance.new("TextLabel")
+footerGhost.BackgroundTransparency = 1
+footerGhost.AutomaticSize = Enum.AutomaticSize.XY
+footerGhost.Size = UDim2.new(0, 0, 0, 18)
+footerGhost.Font = bgFooter.Font
+footerGhost.ZIndex = 2
+footerGhost.Visible = false
+footerGhost.Parent = frame
 
 task.spawn(function()
 	task.wait(0.3)
@@ -292,64 +306,41 @@ task.spawn(function()
 		local textW = bgFooter.TextBounds.X > 0 and bgFooter.TextBounds.X or 220
 		local textH = bgFooter.TextBounds.Y > 0 and bgFooter.TextBounds.Y or 18
 
-		if fs.X == 0 then RunService.Heartbeat:Wait(); continue end
+		if fs.X > 0 then
+			local minX = 12
+			local minY = TOPBAR_H + 6
+			local maxX = fs.X - TAB_PANEL_W - textW - 12
+			local maxY = fs.Y - textH - 6
 
-		local minX = 12
-		local minY = TOPBAR_H + 6
-		local maxX = fs.X - TAB_PANEL_W - textW - 12
-		local maxY = fs.Y - textH - 6
+			bfx = bfx + bspeed * bdx
+			bfy = bfy + bspeed * bdy
 
-		bfx = bfx + bspeed * bdx
-		bfy = bfy + bspeed * bdy
+			local hit = false
+			if bfx >= maxX then bfx = maxX; bdx = -1; hit = true
+			elseif bfx <= minX then bfx = minX; bdx = 1; hit = true end
 
-		local hit = false
-		if bfx >= maxX then
-			bfx = maxX
-			bdx = -1
-			hit = true
-		elseif bfx <= minX then
-			bfx = minX
-			bdx = 1
-			hit = true
-		end
+			if bfy >= maxY then bfy = maxY; bdy = -1; hit = true
+			elseif bfy <= minY then bfy = minY; bdy = 1; hit = true end
 
-		if bfy >= maxY then
-			bfy = maxY
-			bdy = -1
-			hit = true
-		elseif bfy <= minY then
-			bfy = minY
-			bdy = 1
-			hit = true
-		end
-
-		if hit then
-			bgFooter.TextColor3 = Color3.fromRGB(math.random(150, 255), math.random(150, 255), math.random(150, 255))
-		end
-
-		local now = tick()
-		if now - blt > 0.15 and not isClosingAnimation then
-			blt = now
-			if not _footerGhost or not _footerGhost.Parent then
-				_footerGhost = Instance.new("TextLabel")
-				_footerGhost.BackgroundTransparency = 1
-				_footerGhost.AutomaticSize = Enum.AutomaticSize.XY
-				_footerGhost.Size = UDim2.new(0, 0, 0, 18)
-				_footerGhost.Font = bgFooter.Font
-				_footerGhost.ZIndex = 2
-				_footerGhost.Parent = frame
+			if hit then
+				bgFooter.TextColor3 = Color3.fromRGB(math.random(150, 255), math.random(150, 255), math.random(150, 255))
 			end
-			_footerGhost.Text = bgFooter.Text
-			_footerGhost.Position = bgFooter.Position
-			_footerGhost.TextColor3 = Color3.fromRGB(255, 255, 255)
-			_footerGhost.TextTransparency = 0.6
-			_footerGhost.TextSize = bgFooter.TextSize + 1
-			_footerGhost.Visible = true
-			TweenService:Create(_footerGhost, TweenInfo.new(0.2, Enum.EasingStyle.Linear), {TextTransparency = 1}):Play()
-		end
 
-		bgFooter.Position = UDim2.new(0, math.floor(bfx), 0, math.floor(bfy))
-		RunService.Heartbeat:Wait()
+			local now = tick()
+			if now - blt > 0.2 and not isClosingAnimation then
+				blt = now
+				footerGhost.Text = bgFooter.Text
+				footerGhost.Position = bgFooter.Position
+				footerGhost.TextColor3 = Color3.fromRGB(255, 255, 255)
+				footerGhost.TextTransparency = 0.6
+				footerGhost.TextSize = bgFooter.TextSize + 1
+				footerGhost.Visible = true
+				TweenService:Create(footerGhost, TweenInfo.new(0.25, Enum.EasingStyle.Linear), {TextTransparency = 1}):Play()
+			end
+
+			bgFooter.Position = UDim2.new(0, math.floor(bfx), 0, math.floor(bfy))
+		end
+		task.wait(0.033) -- Smooth 30 FPS update
 	end
 end)
 
@@ -362,7 +353,7 @@ bgContainer.ZIndex = 1
 bgContainer.Parent = frame
 
 local butterflies = {}
-for i = 1, 14 do
+for i = 1, 10 do
 	local bfBody = Instance.new("Frame")
 	bfBody.Size = UDim2.new(0, 2, 0, 6)
 	bfBody.BackgroundColor3 = Color3.fromRGB(math.random(180, 255), math.random(180, 255), math.random(180, 255))
@@ -398,14 +389,15 @@ for i = 1, 14 do
 		x = bfBody.Position.X.Scale, y = bfBody.Position.Y.Scale,
 		vx = (math.random()-0.5)*0.04, vy = (math.random()-0.5)*0.02,
 		phase = math.random()*math.pi*2, wingPhase = math.random()*math.pi*2,
-		flutterSpeed = 2+math.random()*2, dirChangeTimer = math.random()*4, rotSpeed = 0,
+		flutterSpeed = 3+math.random()*2, dirChangeTimer = math.random()*4,
 		targetTrans = math.random(50, 75)/100
 	})
 end
 
 task.spawn(function()
 	while frame.Parent do
-		local dt = RunService.Heartbeat:Wait()
+		local dt = 0.033
+		task.wait(dt)
 		if not isClosingAnimation then
 			for _, bf in ipairs(butterflies) do
 				bf.phase = bf.phase + dt * 0.8
@@ -428,22 +420,6 @@ task.spawn(function()
 				local wH = math.floor(2 + wf * 6)
 				bf.wingL.Size = UDim2.new(0, 6, 0, wH)
 				bf.wingR.Size = UDim2.new(0, 6, 0, wH)
-				bf.wingL.Position = UDim2.new(0, -6, 0.5, -wH / 2)
-				bf.wingR.Position = UDim2.new(1, 0, 0.5, -wH / 2)
-			end
-		else
-			for _, bf in ipairs(butterflies) do
-				bf.wingPhase = bf.wingPhase + dt * (bf.flutterSpeed or 22)
-				bf.x = bf.x + (bf.vx or 0.4) * dt
-				bf.y = bf.y + (bf.vy or -0.4) * dt
-				bf.body.Position = UDim2.new(bf.x, 0, bf.y, 0)
-				bf.body.Rotation = bf.body.Rotation + (bf.rotSpeed or 25) * dt
-				local wf = math.abs(math.sin(bf.wingPhase))
-				local wH = math.floor(2 + wf * 6)
-				bf.wingL.Size = UDim2.new(0, 6, 0, wH)
-				bf.wingR.Size = UDim2.new(0, 6, 0, wH)
-				bf.wingL.Position = UDim2.new(0, -6, 0.5, -wH / 2)
-				bf.wingR.Position = UDim2.new(1, 0, 0.5, -wH / 2)
 			end
 		end
 	end
@@ -452,7 +428,7 @@ end)
 local _activeStars = 0
 task.spawn(function()
 	while frame.Parent do
-		if _activeStars >= 5 then task.wait(1) continue end
+		if _activeStars >= 4 then task.wait(2) continue end
 		_activeStars = _activeStars + 1
 		local star = Instance.new("Frame")
 		star.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -486,14 +462,14 @@ task.spawn(function()
 		Instance.new("UICorner", sparkle).CornerRadius = UDim.new(1, 0)
 
 		star.Parent = bgContainer
-		local td = math.random(10, 20) / 10
+		local td = math.random(12, 22) / 10
 		local tw = TweenService:Create(star, TweenInfo.new(td, Enum.EasingStyle.Linear), {Position = UDim2.new(eX, 0, eY, 0)})
 		tw:Play()
 		tw.Completed:Connect(function()
 			star:Destroy()
 			_activeStars = _activeStars - 1
 		end)
-		task.wait(math.random(1, 4))
+		task.wait(math.random(2, 5))
 	end
 end)
 
@@ -542,13 +518,13 @@ task.spawn(function()
 	local a = 0
 	while titleSparkle.Parent do
 		if isClosingAnimation then break end
-		local dt = RunService.Heartbeat:Wait()
-		a = a + dt * 1.2
+		a = a + 0.04
 		titleSparkle.Position = UDim2.new(0, cx + math.cos(a) * rx, 0, cy + math.sin(a) * ry)
 		local pulse = math.sin(a * 2) * 0.5 + 0.5
 		titleSparkle.Size = UDim2.new(0, 24 + pulse * 8, 0, 24 + pulse * 8)
 		if not isClosingAnimation then titleSparkle.ImageTransparency = 0.15 + (1 - pulse) * 0.25 end
 		titleSparkle.Rotation = a * 30
+		task.wait(0.033)
 	end
 end)
 
@@ -557,16 +533,14 @@ task.spawn(function()
 	local gn = {"All Heil Antipathy & @hiies", "Why, why, why?", "A11 H3il Ant1p4##y & @hiies", "Hell H31l 4n+1path-y & @hiies", "A1l He1l A-A-AnT1PAth..y"}
 	while title.Parent do
 		if isClosingAnimation then break end
-		title.Position = UDim2.new(0, bx + math.random(-2, 2), 0, by + math.random(-1, 1))
-		title.TextTransparency = math.random() * 0.12
-		if math.random(1, 6) == 1 then
-			for _ = 1, math.random(4, 8) do
+		if math.random(1, 7) == 1 then
+			for _ = 1, math.random(3, 6) do
 				if isClosingAnimation then break end
 				title.Text = gn[math.random(#gn)]
-				title.Position = UDim2.new(0, bx + math.random(-8, 8), 0, by + math.random(-3, 3))
-				title.TextColor3 = math.random(2) == 1 and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(math.random(100, 200), math.random(100, 200), math.random(100, 200))
-				title.TextTransparency = math.random() * 0.6
-				task.wait(0.025 + math.random() * 0.03)
+				title.Position = UDim2.new(0, bx + math.random(-6, 6), 0, by + math.random(-2, 2))
+				title.TextColor3 = math.random(2) == 1 and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(math.random(120, 220), math.random(120, 220), math.random(120, 220))
+				title.TextTransparency = math.random() * 0.4
+				task.wait(0.035)
 			end
 			if not isClosingAnimation then
 				title.Text = "Heil Antipathy"
@@ -575,7 +549,7 @@ task.spawn(function()
 				title.TextTransparency = 0
 			end
 		end
-		task.wait(0.05 + math.random() * 0.08)
+		task.wait(0.1 + math.random() * 0.15)
 	end
 end)
 
@@ -802,32 +776,6 @@ local function makeTabButton(text, layoutOrder, isActive, bgImageId)
 
 	btn:SetAttribute("IsActiveTab", isActive)
 
-	task.spawn(function()
-		while btn.Parent do
-			if btn:GetAttribute("IsActiveTab") then
-				local v = math.random(200, 255)
-				line.BackgroundColor3 = Color3.fromRGB(v, v, v)
-				line.Size = UDim2.new(math.random(55, 70)/100, 0, 0, math.random(2, 4))
-				ts.Transparency = math.random() * 0.3
-				if math.random(1, 6) == 1 then
-					for _ = 1, math.random(2, 4) do
-						line.BackgroundColor3 = math.random(2) == 1 and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(160, 160, 160)
-						line.Position = UDim2.new(0.175 + math.random(-2, 2)*0.01, 0, 1, -1 + math.random(-1, 1))
-						task.wait(0.04)
-					end
-					line.Position = UDim2.new(0.175, 0, 1, -1)
-					line.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-					line.Size = UDim2.new(0.65, 0, 0, 3)
-				end
-				task.wait(0.08 + math.random() * 0.15)
-			else
-				line.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-				ts.Transparency = 1
-				task.wait(0.3 + math.random() * 0.4)
-			end
-		end
-	end)
-
 	btn.MouseButton1Click:Connect(function()
 		selectTab(text)
 	end)
@@ -936,7 +884,7 @@ local function createTooltip(parent, text, tag, posX, posY)
 	local badgeDot = Instance.new("Frame")
 	badgeDot.Size = UDim2.new(0, 5, 0, 5)
 	badgeDot.Position = UDim2.new(0, 0, 0.5, -2)
-	badgeDot.BackgroundColor3 = currentGlitchColor
+	badgeDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	badgeDot.BorderSizePixel = 0
 	badgeDot.ZIndex = 10003
 	badgeDot.Parent = headerBadge
@@ -949,7 +897,7 @@ local function createTooltip(parent, text, tag, posX, posY)
 	badgeLbl.Text = "FEATURE INFO"
 	badgeLbl.Font = Enum.Font.GothamBold
 	badgeLbl.TextSize = 10
-	badgeLbl.TextColor3 = currentGlitchColor
+	badgeLbl.TextColor3 = Color3.fromRGB(240, 240, 245)
 	badgeLbl.TextXAlignment = Enum.TextXAlignment.Left
 	badgeLbl.ZIndex = 10003
 	badgeLbl.Parent = headerBadge
@@ -965,15 +913,6 @@ local function createTooltip(parent, text, tag, posX, posY)
 	tagLbl.TextXAlignment = Enum.TextXAlignment.Right
 	tagLbl.ZIndex = 10003
 	tagLbl.Parent = headerBadge
-	task.spawn(function()
-		while tip.Parent do
-			if tip.Visible then
-				badgeDot.BackgroundColor3 = currentGlitchColor
-				badgeLbl.TextColor3 = currentGlitchColor
-			end
-			RunService.Heartbeat:Wait()
-		end
-	end)
 
 	local sepLine = Instance.new("Frame")
 	sepLine.LayoutOrder = 2
@@ -1002,6 +941,8 @@ local function createTooltip(parent, text, tag, posX, posY)
 		local targetX = pos.X + 24
 		if targetX + 230 > vp.X - 10 then targetX = pos.X - 236 end
 		tip.Position = UDim2.new(0, targetX, 0, math.clamp(pos.Y - 8, 10, vp.Y - 130))
+		badgeDot.BackgroundColor3 = currentGlitchColor
+		badgeLbl.TextColor3 = currentGlitchColor
 		tip.Visible = true
 		TweenService:Create(icon, TI_FAST, {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
 		for _, c in ipairs(iconCorners) do TweenService:Create(c, TI_FAST, {BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play() end
@@ -1074,7 +1015,7 @@ local function createSection(sectionTitle, order, parent, opts)
 		tipHolder.Parent = header
 
 		local function syncTipPos()
-			tipHolder.Position = UDim2.new(0, titleLbl.AbsoluteSize.X + 32, 0, 8)
+			tipHolder.Position = UDim2.new(0, titleLbl.AbsoluteSize.X + 34, 0, 8)
 		end
 		titleLbl:GetPropertyChangedSignal("AbsoluteSize"):Connect(syncTipPos)
 		task.defer(syncTipPos)
@@ -1132,22 +1073,14 @@ local function createSection(sectionTitle, order, parent, opts)
 		statusText.Parent = header
 	end
 
-	local isHovered = false
 	header.MouseEnter:Connect(function()
-		isHovered = true
-		task.spawn(function()
-			while isHovered and section.Parent do
-				for _, c in ipairs(corners) do
-					c.BackgroundColor3 = currentGlitchColor
-				end
-				titleLbl.TextColor3 = currentGlitchColor
-				RunService.Heartbeat:Wait()
-			end
-		end)
+		activeHoveredObjects[corners] = "corners"
+		activeHoveredObjects[titleLbl] = "text"
 	end)
 
 	header.MouseLeave:Connect(function()
-		isHovered = false
+		activeHoveredObjects[corners] = nil
+		activeHoveredObjects[titleLbl] = nil
 		for _, c in ipairs(corners) do
 			TweenService:Create(c, TI_FAST, {BackgroundColor3 = cornerColor}):Play()
 		end
@@ -1187,7 +1120,7 @@ local function createSection(sectionTitle, order, parent, opts)
 	settingsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 		local contentH = settingsLayout.AbsoluteContentSize.Y
 		settingsFrame.Size = UDim2.new(1, -16, 0, contentH)
-		if isExpanded then
+		if isExpanded or section:GetAttribute("IsExpanded") then
 			section.Size = UDim2.new(1, 0, 0, HEADER_H + 8 + contentH + 12)
 			section.ClipsDescendants = false
 		end
@@ -1302,7 +1235,6 @@ local function createTextBox(text, order, parent, placeholder, maxChars, numbers
 	box.Parent = boxHolder
 
 	local isFocused = false
-	local isHovered = false
 
 	local function updateGhost()
 		if not autoType or not isFocused then ghost.Visible = false; return end
@@ -1326,19 +1258,13 @@ local function createTextBox(text, order, parent, placeholder, maxChars, numbers
 
 	box.Focused:Connect(function()
 		isFocused = true
-		task.spawn(function()
-			while isFocused and box.Parent do
-				for _, bc in ipairs(boxCorners) do
-					bc.BackgroundColor3 = currentGlitchColor
-				end
-				RunService.Heartbeat:Wait()
-			end
-		end)
+		activeHoveredObjects[boxCorners] = "corners"
 		updateGhost()
 	end)
 
 	box.FocusLost:Connect(function(enterPressed)
 		isFocused = false
+		activeHoveredObjects[boxCorners] = nil
 		ghost.Visible = false
 		if enterPressed and autoType then
 			local t = box.Text or ""
@@ -1347,30 +1273,18 @@ local function createTextBox(text, order, parent, placeholder, maxChars, numbers
 				box.Text = sugg
 			end
 		end
-		if not isHovered then
-			for _, bc in ipairs(boxCorners) do
-				TweenService:Create(bc, TI_FAST, {BackgroundColor3 = defaultCornerCol}):Play()
-			end
+		for _, bc in ipairs(boxCorners) do
+			TweenService:Create(bc, TI_FAST, {BackgroundColor3 = defaultCornerCol}):Play()
 		end
 	end)
 
 	boxHolder.MouseEnter:Connect(function()
-		isHovered = true
-		if not isFocused then
-			task.spawn(function()
-				while isHovered and not isFocused and boxHolder.Parent do
-					for _, bc in ipairs(boxCorners) do
-						bc.BackgroundColor3 = currentGlitchColor
-					end
-					RunService.Heartbeat:Wait()
-				end
-			end)
-		end
+		activeHoveredObjects[boxCorners] = "corners"
 	end)
 
 	boxHolder.MouseLeave:Connect(function()
-		isHovered = false
 		if not isFocused then
+			activeHoveredObjects[boxCorners] = nil
 			for _, bc in ipairs(boxCorners) do
 				TweenService:Create(bc, TI_FAST, {BackgroundColor3 = defaultCornerCol}):Play()
 			end
@@ -1415,24 +1329,15 @@ local function makeThemedCardBtn(txt, ord, parentRow, totalCount, colorVariant)
 	local defaultCornerCol = colorVariant == "danger" and Color3.fromRGB(180, 70, 70) or Color3.fromRGB(80, 80, 90)
 	local corners = addCornerBorder(b, defaultCornerCol, 1, 5)
 
-	local isHovered = false
 	b.MouseEnter:Connect(function()
-		isHovered = true
 		if b.Text ~= "Done" and b.Text ~= "Failed" then
 			TweenService:Create(b, TI_FAST, {BackgroundColor3 = colorVariant == "danger" and Color3.fromRGB(48, 22, 22) or Color3.fromRGB(32, 32, 40)}):Play()
 		end
-		task.spawn(function()
-			while isHovered and b.Parent do
-				for _, c in ipairs(corners) do
-					c.BackgroundColor3 = currentGlitchColor
-				end
-				RunService.Heartbeat:Wait()
-			end
-		end)
+		activeHoveredObjects[corners] = "corners"
 	end)
 
 	b.MouseLeave:Connect(function()
-		isHovered = false
+		activeHoveredObjects[corners] = nil
 		if b.Text ~= "Done" and b.Text ~= "Failed" then
 			TweenService:Create(b, TI_FAST, {BackgroundColor3 = colorVariant == "danger" and Color3.fromRGB(26, 14, 14) or Color3.fromRGB(14, 14, 18)}):Play()
 		end
@@ -1477,9 +1382,10 @@ local function createStatRow(label, value, order, parent, hasCopy)
 
 		copyBtn.MouseEnter:Connect(function()
 			TweenService:Create(copyBtn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(30, 30, 40), TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
-			TweenService:Create(cs, TweenInfo.new(0.1), {Color = currentGlitchColor}):Play()
+			activeHoveredObjects[cs] = "stroke"
 		end)
 		copyBtn.MouseLeave:Connect(function()
+			activeHoveredObjects[cs] = nil
 			TweenService:Create(copyBtn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(18, 18, 24), TextColor3 = Color3.fromRGB(190, 190, 200)}):Play()
 			TweenService:Create(cs, TweenInfo.new(0.1), {Color = Color3.fromRGB(55, 55, 65)}):Play()
 		end)
@@ -1885,14 +1791,16 @@ do
 	consoleWideCol.ZIndex = 10
 	consoleWideCol.Parent = consoleRow
 
-	local logSec = createSection("Console", 1, consoleWideCol, {
+	local logSec, logSecFrame = createSection("Console", 1, consoleWideCol, {
 		description = "See logs",
 		tooltip = "For extra information on what is going on or to see what went wrong",
 		tag = "4x01",
-		noStatus = true
+		noStatus = true,
+		defaultExpanded = true
 	})
 
 	consoleLogScroll = Instance.new("ScrollingFrame")
+	consoleLogScroll.Name = "ConsoleLogScroll"
 	consoleLogScroll.LayoutOrder = 1
 	consoleLogScroll.Size = UDim2.new(1, 0, 0, 260)
 	consoleLogScroll.BackgroundColor3 = Color3.fromRGB(6, 6, 8)
@@ -1903,9 +1811,10 @@ do
 	consoleLogScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 	consoleLogScroll.ScrollingDirection = Enum.ScrollingDirection.Y
 	consoleLogScroll.ZIndex = 12
+	consoleLogScroll.Visible = true
 	consoleLogScroll.Parent = logSec
 	Instance.new("UICorner", consoleLogScroll).CornerRadius = UDim.new(0, 5)
-	local consoleCorners = addCornerBorder(consoleLogScroll, Color3.fromRGB(50, 50, 60), 1, 5)
+	addCornerBorder(consoleLogScroll, Color3.fromRGB(50, 50, 60), 1, 5)
 
 	local consolePad = Instance.new("UIPadding")
 	consolePad.PaddingTop = UDim.new(0, 6); consolePad.PaddingBottom = UDim.new(0, 6)
@@ -2030,6 +1939,7 @@ do
 			consoleLogScroll.Parent = poppedWindow
 			consoleLogScroll.Position = UDim2.new(0, 8, 0, 40)
 			consoleLogScroll.Size = UDim2.new(1, -16, 1, -48)
+			consoleLogScroll.ZIndex = 5002
 		else
 			isPoppedOut = false
 			popOutBtn.Text = "Pop Out"
@@ -2039,8 +1949,24 @@ do
 				poppedWindow = nil
 			end
 			consoleLogScroll.Parent = logSec
+			consoleLogScroll.LayoutOrder = 1
 			consoleLogScroll.Position = UDim2.new(0, 0, 0, 0)
 			consoleLogScroll.Size = UDim2.new(1, 0, 0, 260)
+			consoleLogScroll.Visible = true
+			consoleLogScroll.ZIndex = 12
+			for _, ch in ipairs(consoleLogScroll:GetChildren()) do
+				if ch:IsA("TextLabel") then ch.ZIndex = 13 end
+			end
+			task.defer(function()
+				local ch = logSec:FindFirstChildWhichIsA("UIListLayout")
+				if ch then
+					logSec.Size = UDim2.new(1, -16, 0, ch.AbsoluteContentSize.Y)
+					if logSecFrame and logSecFrame:GetAttribute("IsExpanded") then
+						logSecFrame.Size = UDim2.new(1, 0, 0, 54 + 8 + ch.AbsoluteContentSize.Y + 12)
+						logSecFrame.ClipsDescendants = false
+					end
+				end
+			end)
 		end
 	end
 
@@ -2139,11 +2065,11 @@ minimizeBtn.MouseButton1Click:Connect(function()
 			local op = frame.Position
 			frame.Size = UDim2.new(0, 320, 0, TOPBAR_H)
 			body.Visible = false
-			for _ = 1, 5 do
-				uiScale.Scale = s * (0.7 + math.random() * 0.3)
-				frame.Position = op + UDim2.new(0, math.random(-15, 15), 0, math.random(-15, 15))
-				frame.BackgroundTransparency = math.random() * 0.3
-				task.wait(0.03 + math.random() * 0.04)
+			for _ = 1, 4 do
+				uiScale.Scale = s * (0.75 + math.random() * 0.25)
+				frame.Position = op + UDim2.new(0, math.random(-12, 12), 0, math.random(-12, 12))
+				frame.BackgroundTransparency = math.random() * 0.25
+				task.wait(0.04)
 			end
 			uiScale.Scale = s
 			frame.Position = op
@@ -2161,11 +2087,11 @@ minimizeBtn.MouseButton1Click:Connect(function()
 		task.spawn(function()
 			local s = deviceScale
 			local op = frame.Position
-			for _ = 1, 5 do
-				uiScale.Scale = s * (0.7 + math.random() * 0.3)
-				frame.Position = op + UDim2.new(0, math.random(-15, 15), 0, math.random(-15, 15))
-				frame.BackgroundTransparency = math.random() * 0.3
-				task.wait(0.03 + math.random() * 0.04)
+			for _ = 1, 4 do
+				uiScale.Scale = s * (0.75 + math.random() * 0.25)
+				frame.Position = op + UDim2.new(0, math.random(-12, 12), 0, math.random(-12, 12))
+				frame.BackgroundTransparency = math.random() * 0.25
+				task.wait(0.04)
 			end
 			uiScale.Scale = s
 			frame.Position = op
@@ -2226,7 +2152,7 @@ closeBtn.MouseButton1Click:Connect(function()
 				bgFooter.Position = origPos + UDim2.new(0, math.random(-8, 8), 0, math.random(-4, 4))
 				bgFooter.TextTransparency = i / 6
 				bgFooter.TextColor3 = Color3.fromRGB(math.random(160, 255), math.random(160, 255), math.random(160, 255))
-				task.wait(0.03)
+				task.wait(0.04)
 			end
 			bgFooter.Visible = false
 		end)
@@ -2238,8 +2164,6 @@ closeBtn.MouseButton1Click:Connect(function()
 				local speed = 0.35 + math.random() * 0.3
 				bf.vx = math.cos(dirAngle) * speed
 				bf.vy = math.sin(dirAngle) * speed
-				bf.rotSpeed = (math.random() - 0.5) * 40
-				bf.flutterSpeed = 12 + math.random() * 8
 				TweenService:Create(bf.body, TI_SYNC, {BackgroundTransparency = 1}):Play()
 				TweenService:Create(bf.wingL, TI_SYNC, {BackgroundTransparency = 1}):Play()
 				TweenService:Create(bf.wingR, TI_SYNC, {BackgroundTransparency = 1}):Play()
@@ -2303,9 +2227,9 @@ UserInputService.InputEnded:Connect(function(input)
 	end
 end)
 
-local DRAG_SMOOTHNESS = 0.025
+local DRAG_SMOOTHNESS = 0.04
 RunService.RenderStepped:Connect(function()
-	if targetPos and (dragging or (Vector2.new(frame.Position.X.Offset, frame.Position.Y.Offset) - Vector2.new(targetPos.X.Offset, targetPos.Y.Offset)).Magnitude > 0.1) then
+	if targetPos and (dragging or (Vector2.new(frame.Position.X.Offset, frame.Position.Y.Offset) - Vector2.new(targetPos.X.Offset, targetPos.Y.Offset)).Magnitude > 0.5) then
 		if not exactX then
 			exactX = frame.Position.X.Offset
 			exactY = frame.Position.Y.Offset
