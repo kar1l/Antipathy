@@ -1718,6 +1718,7 @@ do
 	local _, winsBox = createTextBox("Wins", 1, statsSec, "0", 10, true)
 	local _, elimBox = createTextBox("Eliminations", 2, statsSec, "0", 10, true)
 
+	local getFrameNoScale
 	local function refreshFrameStatsStatus()
 		local w = winsBox.Text:gsub("^%s+", ""):gsub("%s+$", "")
 		local e = elimBox.Text:gsub("^%s+", ""):gsub("%s+$", "")
@@ -1725,13 +1726,19 @@ do
 			local lines = {}
 			if #w > 0 then table.insert(lines, "Wins: " .. w) end
 			if #e > 0 then table.insert(lines, "Kills: " .. e) end
+			if getFrameNoScale and getFrameNoScale() then table.insert(lines, "[No Scale]") end
 			updateStatsStatus(true, table.concat(lines, "\n"))
 		else
-			updateStatsStatus(false, nil)
+			if getFrameNoScale and getFrameNoScale() then
+				updateStatsStatus(true, "[No Scale]")
+			else
+				updateStatsStatus(false, nil)
+			end
 		end
 	end
 	winsBox:GetPropertyChangedSignal("Text"):Connect(refreshFrameStatsStatus)
 	elimBox:GetPropertyChangedSignal("Text"):Connect(refreshFrameStatsStatus)
+	getFrameNoScale = createSwitch("No Scale", 3, statsSec, false, refreshFrameStatsStatus)
 
 	local frameActionSlot = createTwoSlotActionRow(tabs.Frame, 3)
 	local frameActionSec = createSection("Apply & Revert", 1, frameActionSlot, {
@@ -1760,6 +1767,8 @@ do
 	Exports.sourceContainer = sourceContainer
 	Exports.winsBox = winsBox
 	Exports.elimBox = elimBox
+	Exports.getFrameNoScale = getFrameNoScale
+	Exports.getTargetNoScale = getFrameNoScale
 	Exports.applyButton = applyButton
 	Exports.revertButton = revertButton
 	Exports.getFrameChangeUserId = getFrameChangeUserId
@@ -1793,6 +1802,7 @@ do
 	local _, selfWinsBox = createTextBox("Wins", 1, selfStatsSec, "0", 10, true)
 	local _, selfElimBox = createTextBox("Eliminations", 2, selfStatsSec, "0", 10, true)
 
+	local getSelfNoScale
 	local function refreshSelfStatsStatus()
 		local w = selfWinsBox.Text:gsub("^%s+", ""):gsub("%s+$", "")
 		local e = selfElimBox.Text:gsub("^%s+", ""):gsub("%s+$", "")
@@ -1800,13 +1810,19 @@ do
 			local lines = {}
 			if #w > 0 then table.insert(lines, "Wins: " .. w) end
 			if #e > 0 then table.insert(lines, "Kills: " .. e) end
+			if getSelfNoScale and getSelfNoScale() then table.insert(lines, "[No Scale]") end
 			updateSelfStatsStatus(true, table.concat(lines, "\n"))
 		else
-			updateSelfStatsStatus(false, nil)
+			if getSelfNoScale and getSelfNoScale() then
+				updateSelfStatsStatus(true, "[No Scale]")
+			else
+				updateSelfStatsStatus(false, nil)
+			end
 		end
 	end
 	selfWinsBox:GetPropertyChangedSignal("Text"):Connect(refreshSelfStatsStatus)
 	selfElimBox:GetPropertyChangedSignal("Text"):Connect(refreshSelfStatsStatus)
+	getSelfNoScale = createSwitch("No Scale", 3, selfStatsSec, false, refreshSelfStatsStatus)
 
 	local selfCurrSec, _, updateSelfCurrStatus = createSection("Currencies", 1, selfCols[3], {
 		description = "Spoof your currencies",
@@ -1858,6 +1874,7 @@ do
 	Exports.selfElimBox = selfElimBox
 	Exports.selfCoinsBox = selfCoinsBox
 	Exports.selfTokensBox = selfTokensBox
+	Exports.getSelfNoScale = getSelfNoScale
 	Exports.spoofButton = spoofButton
 	Exports.selfRevertButton = selfRevertButton
 	Exports.getSelfChangeUserId = getSelfChangeUserId
@@ -2134,23 +2151,51 @@ do
 			popDockBtn.MouseButton1Click:Connect(togglePopOut)
 
 			local pDragging = false
-			local pDragStart, pStartPos
+			local pDragStart, pStartPos, pTargetPos, pExactX, pExactY
 			popTopbar.InputBegan:Connect(function(input)
 				if input.UserInputType == Enum.UserInputType.MouseButton1 then
 					pDragging = true
 					pDragStart = input.Position
 					pStartPos = poppedWindow.Position
+					pTargetPos = pStartPos
+					pExactX = pStartPos.X.Offset
+					pExactY = pStartPos.Y.Offset
 				end
 			end)
 			UserInputService.InputChanged:Connect(function(input)
 				if pDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
 					local d = input.Position - pDragStart
-					poppedWindow.Position = UDim2.new(pStartPos.X.Scale, pStartPos.X.Offset + d.X, pStartPos.Y.Scale, pStartPos.Y.Offset + d.Y)
+					pTargetPos = UDim2.new(pStartPos.X.Scale, pStartPos.X.Offset + d.X, pStartPos.Y.Scale, pStartPos.Y.Offset + d.Y)
 				end
 			end)
 			UserInputService.InputEnded:Connect(function(input)
 				if input.UserInputType == Enum.UserInputType.MouseButton1 then
 					pDragging = false
+				end
+			end)
+
+			local popDragConn
+			popDragConn = RunService.RenderStepped:Connect(function()
+				if not poppedWindow or not poppedWindow.Parent then
+					if popDragConn then popDragConn:Disconnect() end
+					return
+				end
+				local DRAG_SMOOTHNESS = 0.02
+				if pTargetPos and (pDragging or (Vector2.new(poppedWindow.Position.X.Offset, poppedWindow.Position.Y.Offset) - Vector2.new(pTargetPos.X.Offset, pTargetPos.Y.Offset)).Magnitude > 0.5) then
+					if not pExactX then
+						pExactX = poppedWindow.Position.X.Offset
+						pExactY = poppedWindow.Position.Y.Offset
+					end
+					pExactX = pExactX + (pTargetPos.X.Offset - pExactX) * DRAG_SMOOTHNESS
+					pExactY = pExactY + (pTargetPos.Y.Offset - pExactY) * DRAG_SMOOTHNESS
+					poppedWindow.Position = UDim2.new(pTargetPos.X.Scale, pExactX, pTargetPos.Y.Scale, pExactY)
+				elseif not pDragging then
+					if pTargetPos then
+						poppedWindow.Position = pTargetPos
+					end
+					pTargetPos = nil
+					pExactX = nil
+					pExactY = nil
 				end
 			end)
 
@@ -2501,7 +2546,7 @@ UserInputService.InputEnded:Connect(function(input)
 	end
 end)
 
-local DRAG_SMOOTHNESS = 0.04
+local DRAG_SMOOTHNESS = 0.02
 RunService.RenderStepped:Connect(function()
 	if targetPos and (dragging or (Vector2.new(frame.Position.X.Offset, frame.Position.Y.Offset) - Vector2.new(targetPos.X.Offset, targetPos.Y.Offset)).Magnitude > 0.5) then
 		if not exactX then
@@ -2512,6 +2557,9 @@ RunService.RenderStepped:Connect(function()
 		exactY = exactY + (targetPos.Y.Offset - exactY) * DRAG_SMOOTHNESS
 		frame.Position = UDim2.new(targetPos.X.Scale, exactX, targetPos.Y.Scale, exactY)
 	elseif not dragging then
+		if targetPos then
+			frame.Position = targetPos
+		end
 		targetPos = nil
 		exactX = nil
 		exactY = nil
