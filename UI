@@ -67,7 +67,6 @@ local activeHoveredObjects = {}
 local isClosingAnimation = false
 
 local pulseTimer = 0
--- Unified Glitch & Hover Animator (Supports corners, text, pulsating strokes, and backgrounds)
 task.spawn(function()
 	local glitchTgtColor = Color3.fromRGB(255, 255, 255)
 	local updateTimer = 0
@@ -1519,7 +1518,6 @@ end
 Exports.setStatus = setStatus
 Exports.addLog = addLog
 
--- ================= TAB 1: FRAME =================
 do
 	createDivider("Framing Tab", 1, tabs.Frame)
 
@@ -1569,7 +1567,6 @@ do
 	})
 	local sourceContainer, sourceBox = createTextBox("Source User", 1, sourceSec, "User / UserID", nil, nil, "player")
 
-	-- Profile PNG preview card below the Source User field
 	local sourcePreviewFrame = Instance.new("Frame")
 	sourcePreviewFrame.Name = "SourcePreview"
 	sourcePreviewFrame.LayoutOrder = 2
@@ -1809,7 +1806,6 @@ do
 	elimBox:GetPropertyChangedSignal("Text"):Connect(refreshFrameStatsStatus)
 	getFrameNoScale = createSwitch("No Scale", 3, statsSec, false, refreshFrameStatsStatus)
 
-	-- Target Manual Feature (Disabled)
 	local targetManualSec, _, updateTargetManualStatus = createSection("Target Manual", 2, rightCol, {
 		description = "Manual target overrides [Disabled]",
 		tooltip = "Manual target overrides are currently disabled",
@@ -1894,7 +1890,6 @@ do
 	Exports.tarManRevertBtn = tarManRevertBtn
 end
 
--- ================= TAB 2: SELF =================
 do
 	createDivider("Spoofing Tab", 1, tabs.Self)
 
@@ -2004,7 +1999,7 @@ do
 	selfCoinsBox:GetPropertyChangedSignal("Text"):Connect(refreshSelfCurrStatus)
 	selfTokensBox:GetPropertyChangedSignal("Text"):Connect(refreshSelfCurrStatus)
 
-	-- Self Manual Feature (Disabled)
+	-- Self Manual (Disabled)
 	local selfManualSec, _, updateSelfManualStatus = createSection("Self Manual", 2, rightCol, {
 		description = "Manual self overrides [Disabled]",
 		tooltip = "Manual self overrides are currently disabled",
@@ -2086,7 +2081,6 @@ do
 	Exports.selfManRevertBtn = selfManRevertBtn
 end
 
--- ================= TAB 3: PROFILE =================
 do
 	createDivider("Profile Stats Tab", 1, tabs.Profile)
 
@@ -2206,7 +2200,6 @@ do
 	abilityBox:GetPropertyChangedSignal("Text"):Connect(refreshAbilityStatus)
 	abilityGamesBox:GetPropertyChangedSignal("Text"):Connect(refreshAbilityStatus)
 
-	-- Profile Target Selector Feature
 	local targetSelectorSec, _, updateTargetSelectorStatus = createSection("Target Selector", 2, rightCol, {
 		description = "Who to apply profile stats to",
 		tooltip = "Choose whether to spoof your own profile, your framed target, or another specific user",
@@ -2282,7 +2275,6 @@ do
 	end
 end
 
--- ================= TAB 4: CONSOLE =================
 do
 	createDivider("Console & Session Stats", 1, tabs.Console)
 
@@ -2571,7 +2563,6 @@ do
 	end)
 end
 
--- STARTUP ENTRANCE ANIMATION (Reverse of close animation)
 task.spawn(function()
 	local TI_ENTER = TweenInfo.new(0.65, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 	TweenService:Create(frame, TI_ENTER, {BackgroundTransparency = 0}):Play()
@@ -2593,7 +2584,6 @@ task.spawn(function()
 	TweenService:Create(bgFooter, TI_ENTER, {TextTransparency = 0}):Play()
 end)
 
--- DRAGGING, KEYBINDS, MINIMIZE & CLOSE ANIMATION
 local isHidden = false
 local isMinimized = false
 local dragging = false
@@ -2658,11 +2648,9 @@ closeBtn.MouseButton1Click:Connect(function()
 	dragging = false; targetPos = nil
 
 	task.spawn(function()
-		-- Allow butterflies to fly freely off-screen past frame bounds
 		frame.ClipsDescendants = false
 		bgContainer.ClipsDescendants = false
 
-		-- Step 1: Smooth fade-out for all tabs, fields, buttons, and UI controls (0.48s)
 		local TI_QUICK_FADE = TweenInfo.new(0.48, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
 		for _, child in ipairs(frame:GetDescendants()) do
@@ -2688,7 +2676,6 @@ closeBtn.MouseButton1Click:Connect(function()
 		TweenService:Create(tabPanel, TI_QUICK_FADE, {BackgroundTransparency = 1}):Play()
 		TweenService:Create(body, TI_QUICK_FADE, {BackgroundTransparency = 1}):Play()
 
-		-- Step 2 (concurrent): Bouncing background name glitches smoothly and erratically
 		task.spawn(function()
 			footerGhost.Visible = false
 			local origPos = bgFooter.Position
@@ -2714,11 +2701,9 @@ closeBtn.MouseButton1Click:Connect(function()
 			TweenService:Create(bgFooter, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
 		end)
 
-		-- Step 3 (concurrent): Butterflies graceful escape flight off the screen
 		task.spawn(function()
 			local TI_FLY_ESCAPE = TweenInfo.new(1.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 			for idx, bf in ipairs(butterflies) do
-				-- Direct them outward away from center of screen
 				local cx = bf.x - 0.5
 				local cy = bf.y - 0.5
 				local dist = math.sqrt(cx*cx + cy*cy)
@@ -2728,7 +2713,6 @@ closeBtn.MouseButton1Click:Connect(function()
 				else
 					cx, cy = cx / dist, cy / dist
 				end
-				-- Spread with random perturbation
 				local spreadX = cx + (math.random() - 0.5) * 0.7
 				local spreadY = cy + (math.random() - 0.5) * 0.7
 				local targetX = bf.x + spreadX * 2.5
@@ -2742,7 +2726,6 @@ closeBtn.MouseButton1Click:Connect(function()
 				TweenService:Create(bf.wingL, TI_FLY_ESCAPE, {BackgroundTransparency = 1}):Play()
 				TweenService:Create(bf.wingR, TI_FLY_ESCAPE, {BackgroundTransparency = 1}):Play()
 
-				-- Rapid wing fluttering during escape
 				task.spawn(function()
 					for _ = 1, 28 do
 						if not bf.wingL or not bf.wingL.Parent then break end
@@ -2755,7 +2738,6 @@ closeBtn.MouseButton1Click:Connect(function()
 			end
 		end)
 
-		-- Sparkle expansion and halftone fade
 		task.spawn(function()
 			local TI_SPARKLE_FADE = TweenInfo.new(1.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 			TweenService:Create(centerSparkle, TI_SPARKLE_FADE, {
@@ -2768,7 +2750,6 @@ closeBtn.MouseButton1Click:Connect(function()
 			end
 		end)
 
-		-- Step 4: After all UI tabs/fields have vanished and butterflies are flying off, smoothly fade out the main background frame
 		task.wait(0.65)
 		local TI_MAIN_BG = TweenInfo.new(0.85, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
 		TweenService:Create(frame, TI_MAIN_BG, {BackgroundTransparency = 1}):Play()
