@@ -66,12 +66,14 @@ local currentGlitchColor = Color3.fromRGB(255, 255, 255)
 local activeHoveredObjects = {}
 local isClosingAnimation = false
 
--- Unified Glitch & Hover Animator (Supports both corner tables and instance elements)
+local pulseTimer = 0
+-- Unified Glitch & Hover Animator (Supports corners, text, pulsating strokes, and backgrounds)
 task.spawn(function()
 	local glitchTgtColor = Color3.fromRGB(255, 255, 255)
 	local updateTimer = 0
 	while true do
 		task.wait(0.035)
+		pulseTimer = pulseTimer + 0.035
 		updateTimer = updateTimer - 0.035
 		if updateTimer <= 0 then
 			updateTimer = 0.12 + math.random() * 0.18
@@ -81,6 +83,8 @@ task.spawn(function()
 			glitchTgtColor = Color3.fromRGB(r, g, b)
 		end
 		currentGlitchColor = currentGlitchColor:Lerp(glitchTgtColor, 0.3)
+
+		local pulseAlpha = (math.sin(pulseTimer * 4.8) + 1) / 2
 
 		for obj, kind in pairs(activeHoveredObjects) do
 			if kind == "corners" and typeof(obj) == "table" then
@@ -97,6 +101,9 @@ task.spawn(function()
 					obj.TextColor3 = currentGlitchColor
 				elseif kind == "stroke" then
 					obj.Color = currentGlitchColor
+				elseif kind == "stroke_pulse" then
+					obj.Color = currentGlitchColor
+					obj.Transparency = 0.05 + (1 - pulseAlpha) * 0.95
 				elseif kind == "bg" then
 					obj.BackgroundColor3 = currentGlitchColor
 				end
@@ -171,7 +178,9 @@ uiScale.Parent = frame
 workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
 	local vp = workspace.CurrentCamera.ViewportSize
 	deviceScale = math.min(1, math.min(vp.X/1920, vp.Y/1080))
-	if uiScale.Scale > 0 and not isClosingAnimation then uiScale.Scale = deviceScale end
+	if not isHidden and not isClosingAnimation then
+		uiScale.Scale = deviceScale
+	end
 end)
 
 local mainGradient = Instance.new("UIGradient")
@@ -333,9 +342,7 @@ task.spawn(function()
 			if bfy >= maxY then bfy = maxY; bdy = -1; hit = true
 			elseif bfy <= minY then bfy = minY; bdy = 1; hit = true end
 
-			if hit then
-				bgFooter.TextColor3 = Color3.fromRGB(math.random(150, 255), math.random(150, 255), math.random(150, 255))
-			end
+			bgFooter.TextColor3 = currentGlitchColor
 
 			local now = tick()
 			if now - blt > 0.2 and not isClosingAnimation then
@@ -999,6 +1006,14 @@ local function createSection(sectionTitle, order, parent, opts)
 	local cornerColor = Color3.fromRGB(60, 60, 68)
 	local corners = addCornerBorder(section, cornerColor, 1, 10)
 
+	local sectionStroke = Instance.new("UIStroke")
+	sectionStroke.Name = "HoverStroke"
+	sectionStroke.Thickness = 1
+	sectionStroke.Color = cornerColor
+	sectionStroke.Transparency = 1
+	sectionStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	sectionStroke.Parent = section
+
 	local header = Instance.new("TextButton")
 	header.Size = UDim2.new(1, 0, 0, HEADER_H)
 	header.BackgroundTransparency = 1
@@ -1089,15 +1104,21 @@ local function createSection(sectionTitle, order, parent, opts)
 	header.MouseEnter:Connect(function()
 		activeHoveredObjects[corners] = "corners"
 		activeHoveredObjects[titleLbl] = "text"
+		activeHoveredObjects[descLbl] = "text"
+		activeHoveredObjects[sectionStroke] = "stroke_pulse"
 	end)
 
 	header.MouseLeave:Connect(function()
 		activeHoveredObjects[corners] = nil
 		activeHoveredObjects[titleLbl] = nil
+		activeHoveredObjects[descLbl] = nil
+		activeHoveredObjects[sectionStroke] = nil
 		for _, c in ipairs(corners) do
 			TweenService:Create(c, TI_FAST, {BackgroundColor3 = cornerColor}):Play()
 		end
 		TweenService:Create(titleLbl, TI_FAST, {TextColor3 = Color3.fromRGB(240, 240, 245)}):Play()
+		TweenService:Create(descLbl, TI_FAST, {TextColor3 = Color3.fromRGB(130, 130, 140)}):Play()
+		TweenService:Create(sectionStroke, TI_FAST, {Transparency = 1}):Play()
 	end)
 
 	local settingsFrame = Instance.new("Frame")
@@ -1777,6 +1798,32 @@ do
 	elimBox:GetPropertyChangedSignal("Text"):Connect(refreshFrameStatsStatus)
 	getFrameNoScale = createSwitch("No Scale", 3, statsSec, false, refreshFrameStatsStatus)
 
+	-- Target Manual Feature
+	local targetManualSec = createSection("Target Manual", 2, rightCol, {
+		description = "Manual target overrides",
+		tooltip = "Manually change target's DisplayName, Username, or Avatar by UserID",
+		tag = "1x05",
+		noStatus = true
+	})
+	local _, tarManDisplayNameBox = createTextBox("DisplayName", 1, targetManualSec, "DisplayName")
+	local _, tarManUsernameBox = createTextBox("Username", 2, targetManualSec, "Username")
+	local _, tarManTargetIdBox = createTextBox("Tar. UserID", 3, targetManualSec, "0", 14, true)
+	local _, tarManSourceIdBox = createTextBox("Sorc. UserID", 4, targetManualSec, "0", 14, true)
+
+	local tarManBtnRow = Instance.new("Frame")
+	tarManBtnRow.LayoutOrder = 5
+	tarManBtnRow.Size = UDim2.new(1, 0, 0, 32)
+	tarManBtnRow.BackgroundTransparency = 1
+	tarManBtnRow.ZIndex = 10
+	tarManBtnRow.Parent = targetManualSec
+	local tarManBtnLayout = Instance.new("UIListLayout")
+	tarManBtnLayout.FillDirection = Enum.FillDirection.Horizontal
+	tarManBtnLayout.Padding = UDim.new(0, 8)
+	tarManBtnLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	tarManBtnLayout.Parent = tarManBtnRow
+	local tarManApplyBtn = makeThemedCardBtn("Apply Manual", 1, tarManBtnRow, 2)
+	local tarManRevertBtn = makeThemedCardBtn("Revert Manual", 2, tarManBtnRow, 2, "danger")
+
 	local frameActionSec = createSection("Apply & Revert", 2, leftColContainer, {
 		description = "Frame target... or I guess revert",
 		tooltip = "Apply or revert the changes done to target",
@@ -1809,6 +1856,13 @@ do
 	Exports.revertButton = revertButton
 	Exports.getFrameChangeUserId = getFrameChangeUserId
 	Exports.getFrameNamesOnly = getFrameNamesOnly
+
+	Exports.tarManDisplayNameBox = tarManDisplayNameBox
+	Exports.tarManUsernameBox = tarManUsernameBox
+	Exports.tarManTargetIdBox = tarManTargetIdBox
+	Exports.tarManSourceIdBox = tarManSourceIdBox
+	Exports.tarManApplyBtn = tarManApplyBtn
+	Exports.tarManRevertBtn = tarManRevertBtn
 end
 
 -- ================= TAB 2: SELF =================
@@ -1921,6 +1975,31 @@ do
 	selfCoinsBox:GetPropertyChangedSignal("Text"):Connect(refreshSelfCurrStatus)
 	selfTokensBox:GetPropertyChangedSignal("Text"):Connect(refreshSelfCurrStatus)
 
+	-- Self Manual Feature
+	local selfManualSec = createSection("Self Manual", 2, rightCol, {
+		description = "Manual self overrides",
+		tooltip = "Manually change your own DisplayName, Username, or Avatar by UserID",
+		tag = "2x05",
+		noStatus = true
+	})
+	local _, selfManDisplayNameBox = createTextBox("DisplayName", 1, selfManualSec, "DisplayName")
+	local _, selfManUsernameBox = createTextBox("Username", 2, selfManualSec, "Username")
+	local _, selfManSourceIdBox = createTextBox("UserID", 3, selfManualSec, "0", 14, true)
+
+	local selfManBtnRow = Instance.new("Frame")
+	selfManBtnRow.LayoutOrder = 4
+	selfManBtnRow.Size = UDim2.new(1, 0, 0, 32)
+	selfManBtnRow.BackgroundTransparency = 1
+	selfManBtnRow.ZIndex = 10
+	selfManBtnRow.Parent = selfManualSec
+	local selfManBtnLayout = Instance.new("UIListLayout")
+	selfManBtnLayout.FillDirection = Enum.FillDirection.Horizontal
+	selfManBtnLayout.Padding = UDim.new(0, 8)
+	selfManBtnLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	selfManBtnLayout.Parent = selfManBtnRow
+	local selfManApplyBtn = makeThemedCardBtn("Apply Manual", 1, selfManBtnRow, 2)
+	local selfManRevertBtn = makeThemedCardBtn("Revert Manual", 2, selfManBtnRow, 2, "danger")
+
 	local selfActionSec = createSection("Apply & Revert", 2, leftColContainer, {
 		description = "Spoof!... or again I guess revert",
 		tooltip = "Apply or revert the changes you've made",
@@ -1952,6 +2031,12 @@ do
 	Exports.selfRevertButton = selfRevertButton
 	Exports.getSelfChangeUserId = getSelfChangeUserId
 	Exports.getSelfNamesOnly = getSelfNamesOnly
+
+	Exports.selfManDisplayNameBox = selfManDisplayNameBox
+	Exports.selfManUsernameBox = selfManUsernameBox
+	Exports.selfManSourceIdBox = selfManSourceIdBox
+	Exports.selfManApplyBtn = selfManApplyBtn
+	Exports.selfManRevertBtn = selfManRevertBtn
 end
 
 -- ================= TAB 3: PROFILE =================
@@ -2074,6 +2159,43 @@ do
 	abilityBox:GetPropertyChangedSignal("Text"):Connect(refreshAbilityStatus)
 	abilityGamesBox:GetPropertyChangedSignal("Text"):Connect(refreshAbilityStatus)
 
+	-- Profile Target Selector Feature
+	local targetSelectorSec, _, updateTargetSelectorStatus = createSection("Target Selector", 2, rightCol, {
+		description = "Who to apply profile stats to",
+		tooltip = "Choose whether to spoof your own profile, your framed target, or another specific user",
+		tag = "3x05"
+	})
+
+	local profileTargetMode = "Self"
+	local setSelfSwitch, setTargetSwitch, setAnotherSwitch
+
+	local function updateProfileSelectorUI(mode)
+		profileTargetMode = mode
+		if setSelfSwitch then setSelfSwitch(mode == "Self", true) end
+		if setTargetSwitch then setTargetSwitch(mode == "Target", true) end
+		if setAnotherSwitch then setAnotherSwitch(mode == "Another", true) end
+		updateTargetSelectorStatus(true, "Target: " .. mode)
+	end
+
+	local getSelfSwitch
+	getSelfSwitch, setSelfSwitch = createSwitch("Self", 1, targetSelectorSec, true, function(on)
+		if on then updateProfileSelectorUI("Self") else updateProfileSelectorUI("Self") end
+	end)
+
+	local getTargetSwitch
+	getTargetSwitch, setTargetSwitch = createSwitch("Target", 2, targetSelectorSec, false, function(on)
+		if on then updateProfileSelectorUI("Target") else updateProfileSelectorUI("Self") end
+	end)
+
+	local getAnotherSwitch
+	getAnotherSwitch, setAnotherSwitch = createSwitch("Another", 3, targetSelectorSec, false, function(on)
+		if on then updateProfileSelectorUI("Another") else updateProfileSelectorUI("Self") end
+	end)
+
+	local _, profileAnotherBox = createTextBox("Another User", 4, targetSelectorSec, "User / UserID", nil, nil, "player")
+
+	updateProfileSelectorUI("Self")
+
 	local profActionSec = createSection("Apply & Revert", 2, leftColContainer, {
 		description = "Andddd apply!... revert..?",
 		tooltip = "Apply or revert profile stats changes",
@@ -2105,6 +2227,12 @@ do
 	Exports.abilityGamesBox = abilityGamesBox
 	Exports.profileApplyButton = profileApplyButton
 	Exports.profileRevertButton = profileRevertButton
+
+	Exports.getProfileTargetMode = function() return profileTargetMode end
+	Exports.profileAnotherBox = profileAnotherBox
+	Exports.getProfileAnotherText = function()
+		return profileAnotherBox.Text:gsub("^%s+", ""):gsub("%s+$", "")
+	end
 end
 
 -- ================= TAB 4: CONSOLE =================
@@ -2173,7 +2301,7 @@ do
 	local placeholderLogLabel = Instance.new("TextLabel")
 	placeholderLogLabel.Size = UDim2.new(1, 0, 1, 0)
 	placeholderLogLabel.BackgroundTransparency = 1
-	placeholderLogLabel.Text = "[Terminal is currently popped out]"
+	placeholderLogLabel.Text = "[Console is currently popped out]"
 	placeholderLogLabel.TextColor3 = Color3.fromRGB(100, 100, 115)
 	placeholderLogLabel.Font = Enum.Font.GothamMedium
 	placeholderLogLabel.TextSize = 13
@@ -2615,8 +2743,15 @@ UserInputService.InputBegan:Connect(function(input)
 					frame.Visible = true
 					task.wait(0.04)
 				end
-				TweenService:Create(uiScale, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Scale = 0}):Play()
+				local tw = TweenService:Create(uiScale, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Scale = 0})
+				tw:Play()
+				tw.Completed:Wait()
+				if isHidden then
+					frame.Visible = false
+				end
 			else
+				frame.Visible = true
+				uiScale.Scale = 0
 				TweenService:Create(uiScale, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Scale = deviceScale}):Play()
 				task.wait(0.1)
 				for _ = 1, 3 do
