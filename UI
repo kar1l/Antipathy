@@ -2064,7 +2064,7 @@ do
 	selfBtnLayout.Padding = UDim.new(0, 8)
 	selfBtnLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	selfBtnLayout.Parent = selfBtnRow
-	local spoofButton = makeThemedCardBtn("Spoof Stats", 1, selfBtnRow, 2)
+	local spoofButton = makeThemedCardBtn("Spoof Self", 1, selfBtnRow, 2)
 	local selfRevertButton = makeThemedCardBtn("Revert Changes", 2, selfBtnRow, 2, "danger")
 
 	Exports.selfSourceBox = selfSourceBox
