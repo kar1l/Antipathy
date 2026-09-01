@@ -59,6 +59,7 @@ local TI_NORMAL = TweenInfo.new(0.18)
 local TI_EXPAND = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 local FRAME_W, FRAME_H = 880, 550
 local TOPBAR_H = 52
+local STATUS_BAR_H = 26
 local TAB_PANEL_W = 115
 local COL_GAP = 10
 
@@ -364,7 +365,7 @@ end)
 
 local bgContainer = Instance.new("CanvasGroup")
 bgContainer.Name = "BgContainer"
-bgContainer.Size = UDim2.new(1, -TAB_PANEL_W, 1, -TOPBAR_H)
+bgContainer.Size = UDim2.new(1, -TAB_PANEL_W, 1, -TOPBAR_H - STATUS_BAR_H)
 bgContainer.Position = UDim2.new(0, 0, 0, TOPBAR_H)
 bgContainer.BackgroundTransparency = 1
 bgContainer.ZIndex = 1
@@ -641,7 +642,7 @@ local closeBtn = makeTopButton("x", FRAME_W-42, 12, {base=Color3.fromRGB(240,240
 
 local tabPanel = Instance.new("Frame")
 tabPanel.Name = "TabPanel"
-tabPanel.Size = UDim2.new(0, TAB_PANEL_W, 1, -TOPBAR_H)
+tabPanel.Size = UDim2.new(0, TAB_PANEL_W, 1, -TOPBAR_H - STATUS_BAR_H)
 tabPanel.Position = UDim2.new(1, -TAB_PANEL_W, 0, TOPBAR_H)
 tabPanel.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
 tabPanel.BorderSizePixel = 0
@@ -669,9 +670,97 @@ local body = Instance.new("Frame")
 body.Name = "Body"
 body.BackgroundTransparency = 1
 body.Position = UDim2.new(0, 0, 0, TOPBAR_H)
-body.Size = UDim2.new(1, -TAB_PANEL_W, 1, -TOPBAR_H)
+body.Size = UDim2.new(1, -TAB_PANEL_W, 1, -TOPBAR_H - STATUS_BAR_H)
 body.ZIndex = 10
 body.Parent = frame
+
+-- ================= BOTTOM STATUS / READINESS FOOTER =================
+local statusBar = Instance.new("Frame")
+statusBar.Name = "StatusBar"
+statusBar.Size = UDim2.new(1, 0, 0, STATUS_BAR_H)
+statusBar.Position = UDim2.new(0, 0, 1, -STATUS_BAR_H)
+statusBar.BackgroundColor3 = Color3.fromRGB(8, 8, 11)
+statusBar.BorderSizePixel = 0
+statusBar.ZIndex = 50
+statusBar.Parent = frame
+
+local statusTopSep = Instance.new("Frame")
+statusTopSep.Size = UDim2.new(1, 0, 0, 1)
+statusTopSep.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+statusTopSep.BorderSizePixel = 0
+statusTopSep.ZIndex = 51
+statusTopSep.Parent = statusBar
+
+local statusLayout = Instance.new("UIListLayout")
+statusLayout.FillDirection = Enum.FillDirection.Horizontal
+statusLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+statusLayout.Padding = UDim.new(0, 14)
+statusLayout.SortOrder = Enum.SortOrder.LayoutOrder
+statusLayout.Parent = statusBar
+
+local statusPad = Instance.new("UIPadding")
+statusPad.PaddingLeft = UDim.new(0, 16)
+statusPad.PaddingRight = UDim.new(0, 16)
+statusPad.Parent = statusBar
+
+local readinessBadges = {}
+local function createReadinessBadge(key, defaultName, order)
+	local badge = Instance.new("Frame")
+	badge.LayoutOrder = order
+	badge.BackgroundTransparency = 1
+	badge.Size = UDim2.new(0, 0, 1, 0)
+	badge.AutomaticSize = Enum.AutomaticSize.X
+	badge.ZIndex = 52
+	badge.Parent = statusBar
+
+	local dot = Instance.new("Frame")
+	dot.Size = UDim2.new(0, 6, 0, 6)
+	dot.Position = UDim2.new(0, 0, 0.5, -3)
+	dot.BackgroundColor3 = Color3.fromRGB(240, 200, 60)
+	dot.BorderSizePixel = 0
+	dot.ZIndex = 53
+	dot.Parent = badge
+	Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
+
+	local lbl = Instance.new("TextLabel")
+	lbl.BackgroundTransparency = 1
+	lbl.Position = UDim2.new(0, 11, 0, 0)
+	lbl.Size = UDim2.new(0, 0, 1, 0)
+	lbl.AutomaticSize = Enum.AutomaticSize.X
+	lbl.Text = defaultName .. ": Loading..."
+	lbl.Font = Enum.Font.Code
+	lbl.TextSize = 10
+	lbl.TextColor3 = Color3.fromRGB(240, 200, 80)
+	lbl.TextXAlignment = Enum.TextXAlignment.Left
+	lbl.ZIndex = 53
+	lbl.Parent = badge
+
+	readinessBadges[key] = {
+		name = defaultName,
+		dot = dot,
+		label = lbl
+	}
+end
+
+createReadinessBadge("userids", "UserIDs", 1)
+createReadinessBadge("players", "Players", 2)
+createReadinessBadge("profile", "Profile", 3)
+createReadinessBadge("leaderstats", "Leaderstats", 4)
+createReadinessBadge("system", "System", 5)
+
+local function setReadinessStatus(moduleKey, isReady, customText)
+	local b = readinessBadges[moduleKey]
+	if not b then return end
+	local targetDotCol = isReady and Color3.fromRGB(80, 235, 120) or Color3.fromRGB(240, 200, 60)
+	local targetTxtCol = isReady and Color3.fromRGB(160, 245, 180) or Color3.fromRGB(240, 200, 80)
+	local targetText = customText or (b.name .. ": " .. (isReady and "Loaded" or "Loading..."))
+
+	TweenService:Create(b.dot, TI_FAST, {BackgroundColor3 = targetDotCol}):Play()
+	TweenService:Create(b.label, TI_FAST, {TextColor3 = targetTxtCol}):Play()
+	b.label.Text = targetText
+end
+Exports.setReadinessStatus = setReadinessStatus
+Exports.statusBar = statusBar
 
 local function createTabScroll(name, vis)
 	local tab = Instance.new("ScrollingFrame")
@@ -964,12 +1053,21 @@ local function createTooltip(parent, text, tag, posX, posY)
 		tip.Visible = true
 		TweenService:Create(icon, TI_FAST, {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
 		activeHoveredObjects[iconCorners] = "corners"
+		activeHoveredObjects[badgeDot] = "bg"
+		activeHoveredObjects[badgeLbl] = "text"
+		activeHoveredObjects[tipText] = "text"
 	end)
 	icon.MouseLeave:Connect(function()
 		tip.Visible = false
 		activeHoveredObjects[iconCorners] = nil
+		activeHoveredObjects[badgeDot] = nil
+		activeHoveredObjects[badgeLbl] = nil
+		activeHoveredObjects[tipText] = nil
 		TweenService:Create(icon, TI_FAST, {TextColor3 = Color3.fromRGB(160, 160, 170)}):Play()
 		for _, c in ipairs(iconCorners) do TweenService:Create(c, TI_FAST, {BackgroundColor3 = Color3.fromRGB(120, 120, 130)}):Play() end
+		badgeDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		badgeLbl.TextColor3 = Color3.fromRGB(240, 240, 245)
+		tipText.TextColor3 = Color3.fromRGB(235, 235, 240)
 	end)
 	return icon
 end
@@ -1799,16 +1897,36 @@ do
 	getFrameNoScale = createSwitch("No Scale", 3, statsSec, false, refreshFrameStatsStatus)
 
 	-- Target Manual Feature
-	local targetManualSec = createSection("Target Manual", 2, rightCol, {
+	local targetManualSec, _, updateTargetManualStatus = createSection("Target Manual", 2, rightCol, {
 		description = "Manual target overrides",
 		tooltip = "Manually change target's DisplayName, Username, or Avatar by UserID",
-		tag = "1x05",
-		noStatus = true
+		tag = "1x05"
 	})
 	local _, tarManDisplayNameBox = createTextBox("DisplayName", 1, targetManualSec, "DisplayName")
 	local _, tarManUsernameBox = createTextBox("Username", 2, targetManualSec, "Username")
 	local _, tarManTargetIdBox = createTextBox("Tar. UserID", 3, targetManualSec, "0", 14, true)
 	local _, tarManSourceIdBox = createTextBox("Sorc. UserID", 4, targetManualSec, "0", 14, true)
+
+	local function refreshTargetManualStatus()
+		local d = tarManDisplayNameBox.Text:gsub("^%s+", ""):gsub("%s+$", "")
+		local u = tarManUsernameBox.Text:gsub("^%s+", ""):gsub("%s+$", "")
+		local tid = tarManTargetIdBox.Text:gsub("^%s+", ""):gsub("%s+$", "")
+		local sid = tarManSourceIdBox.Text:gsub("^%s+", ""):gsub("%s+$", "")
+		if #d > 0 or #u > 0 or #tid > 0 or #sid > 0 then
+			local lines = {}
+			if #tid > 0 then table.insert(lines, "TarID: " .. tid) end
+			if #d > 0 then table.insert(lines, "Disp: " .. d) end
+			if #u > 0 then table.insert(lines, "User: " .. u) end
+			if #sid > 0 then table.insert(lines, "SorcID: " .. sid) end
+			updateTargetManualStatus(true, table.concat(lines, "\n"))
+		else
+			updateTargetManualStatus(false, nil)
+		end
+	end
+	tarManDisplayNameBox:GetPropertyChangedSignal("Text"):Connect(refreshTargetManualStatus)
+	tarManUsernameBox:GetPropertyChangedSignal("Text"):Connect(refreshTargetManualStatus)
+	tarManTargetIdBox:GetPropertyChangedSignal("Text"):Connect(refreshTargetManualStatus)
+	tarManSourceIdBox:GetPropertyChangedSignal("Text"):Connect(refreshTargetManualStatus)
 
 	local tarManBtnRow = Instance.new("Frame")
 	tarManBtnRow.LayoutOrder = 5
@@ -1976,15 +2094,32 @@ do
 	selfTokensBox:GetPropertyChangedSignal("Text"):Connect(refreshSelfCurrStatus)
 
 	-- Self Manual Feature
-	local selfManualSec = createSection("Self Manual", 2, rightCol, {
+	local selfManualSec, _, updateSelfManualStatus = createSection("Self Manual", 2, rightCol, {
 		description = "Manual self overrides",
 		tooltip = "Manually change your own DisplayName, Username, or Avatar by UserID",
-		tag = "2x05",
-		noStatus = true
+		tag = "2x05"
 	})
 	local _, selfManDisplayNameBox = createTextBox("DisplayName", 1, selfManualSec, "DisplayName")
 	local _, selfManUsernameBox = createTextBox("Username", 2, selfManualSec, "Username")
 	local _, selfManSourceIdBox = createTextBox("UserID", 3, selfManualSec, "0", 14, true)
+
+	local function refreshSelfManualStatus()
+		local d = selfManDisplayNameBox.Text:gsub("^%s+", ""):gsub("%s+$", "")
+		local u = selfManUsernameBox.Text:gsub("^%s+", ""):gsub("%s+$", "")
+		local sid = selfManSourceIdBox.Text:gsub("^%s+", ""):gsub("%s+$", "")
+		if #d > 0 or #u > 0 or #sid > 0 then
+			local lines = {}
+			if #d > 0 then table.insert(lines, "Disp: " .. d) end
+			if #u > 0 then table.insert(lines, "User: " .. u) end
+			if #sid > 0 then table.insert(lines, "SorcID: " .. sid) end
+			updateSelfManualStatus(true, table.concat(lines, "\n"))
+		else
+			updateSelfManualStatus(false, nil)
+		end
+	end
+	selfManDisplayNameBox:GetPropertyChangedSignal("Text"):Connect(refreshSelfManualStatus)
+	selfManUsernameBox:GetPropertyChangedSignal("Text"):Connect(refreshSelfManualStatus)
+	selfManSourceIdBox:GetPropertyChangedSignal("Text"):Connect(refreshSelfManualStatus)
 
 	local selfManBtnRow = Instance.new("Frame")
 	selfManBtnRow.LayoutOrder = 4
