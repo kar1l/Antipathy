@@ -1552,8 +1552,9 @@ do
 		tag = "1x01"
 	})
 	local targetContainer, targetBox = createTextBox("Target User", 1, targetSec, "User / UserID", nil, nil, "player")
-	local getFrameChangeUserId = createSwitch("Change UserId", 2, targetSec, false)
-	local getFrameNamesOnly = createSwitch("Names Only", 3, targetSec, false)
+	local getFrameRobloxPlus = createSwitch("Roblox Plus", 2, targetSec, false)
+	local getFrameChangeUserId = createSwitch("Change UserId", 3, targetSec, false)
+	local getFrameNamesOnly = createSwitch("Names Only", 4, targetSec, false)
 
 	targetBox:GetPropertyChangedSignal("Text"):Connect(function()
 		local t = targetBox.Text:gsub("^%s+", ""):gsub("%s+$", "")
@@ -1879,6 +1880,7 @@ do
 	Exports.getTargetNoScale = getFrameNoScale
 	Exports.applyButton = applyButton
 	Exports.revertButton = revertButton
+	Exports.getFrameRobloxPlus = getFrameRobloxPlus
 	Exports.getFrameChangeUserId = getFrameChangeUserId
 	Exports.getFrameNamesOnly = getFrameNamesOnly
 
@@ -1924,8 +1926,9 @@ do
 		tag = "2x01"
 	})
 	local selfSourceContainer, selfSourceBox = createTextBox("Source User", 1, selfIdSec, "User / UserID", nil, nil, "player")
-	local getSelfChangeUserId = createSwitch("Change UserId", 2, selfIdSec, false)
-	local getSelfNamesOnly = createSwitch("Names Only", 3, selfIdSec, false)
+	local getSelfRobloxPlus = createSwitch("Roblox Plus", 2, selfIdSec, false)
+	local getSelfChangeUserId = createSwitch("Change UserId", 3, selfIdSec, false)
+	local getSelfNamesOnly = createSwitch("Names Only", 4, selfIdSec, false)
 
 	selfSourceBox:GetPropertyChangedSignal("Text"):Connect(function()
 		local s = selfSourceBox.Text:gsub("^%s+", ""):gsub("%s+$", "")
@@ -2071,6 +2074,7 @@ do
 	Exports.getSelfNoScale = getSelfNoScale
 	Exports.spoofButton = spoofButton
 	Exports.selfRevertButton = selfRevertButton
+	Exports.getSelfRobloxPlus = getSelfRobloxPlus
 	Exports.getSelfChangeUserId = getSelfChangeUserId
 	Exports.getSelfNamesOnly = getSelfNamesOnly
 
