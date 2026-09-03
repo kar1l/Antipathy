@@ -1887,6 +1887,18 @@ do
 	local tarManApplyBtn = makeThemedCardBtn("Apply Manual", 1, tarManBtnRow, 2, "disabled")
 	local tarManRevertBtn = makeThemedCardBtn("Revert Manual", 2, tarManBtnRow, 2, "disabled")
 
+	local frameAccessoriesSec = createSection("Accessories", 3, rightCol, {
+		description = "Accessory spoofing [Disabled]",
+		tooltip = "Accessory spoofing is currently disabled",
+		tag = "OFF",
+		disabled = true
+	})
+	local fAccCont, fAccBox = createTextBox("Accessories", 1, frameAccessoriesSec, "Disabled")
+	setControlDisabled(fAccCont, fAccBox)
+	local _, fAccSwitchSet = createSwitch("Equip Acc.", 2, frameAccessoriesSec, false)
+	local fAccSwitchBg = frameAccessoriesSec:FindFirstChild("Settings") and frameAccessoriesSec.Settings:GetChildren()[2]
+	if fAccSwitchBg then setSwitchDisabled(fAccSwitchBg:FindFirstChildWhichIsA("TextButton")) end
+
 	local _, frameRow2Cols = createColumnLayout(leftColContainer, 2, COL_GAP, 2)
 
 	local frameSwordSec = createSection("Sword", 1, frameRow2Cols[1], {
@@ -1930,9 +1942,8 @@ do
 	frameBtnLayout.Padding = UDim.new(0, 8)
 	frameBtnLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	frameBtnLayout.Parent = frameBtnRow
-	local applyButton = makeThemedCardBtn("Frame Target", 1, frameBtnRow, 3)
-	local revertButton = makeThemedCardBtn("Revert Target", 2, frameBtnRow, 3, "danger")
-	local accessoriesButton = makeThemedCardBtn("Accessories", 3, frameBtnRow, 3, "disabled")
+	local applyButton = makeThemedCardBtn("Frame Target", 1, frameBtnRow, 2)
+	local revertButton = makeThemedCardBtn("Revert Target", 2, frameBtnRow, 2, "danger")
 
 	Exports.targetBox = targetBox
 	Exports.targetContainer = targetContainer
@@ -1942,7 +1953,6 @@ do
 	Exports.elimBox = elimBox
 	Exports.getFrameNoScale = getFrameNoScale
 	Exports.getTargetNoScale = getFrameNoScale
-	Exports.accessoriesButton = accessoriesButton
 	Exports.applyButton = applyButton
 	Exports.revertButton = revertButton
 	Exports.getFrameRobloxPlus = getFrameRobloxPlus
@@ -2097,6 +2107,18 @@ do
 	local selfManApplyBtn = makeThemedCardBtn("Apply Manual", 1, selfManBtnRow, 2, "disabled")
 	local selfManRevertBtn = makeThemedCardBtn("Revert Manual", 2, selfManBtnRow, 2, "disabled")
 
+	local selfAccessoriesSec = createSection("Accessories", 3, rightCol, {
+		description = "Accessory spoofing [Disabled]",
+		tooltip = "Accessory spoofing is currently disabled",
+		tag = "OFF",
+		disabled = true
+	})
+	local sAccCont, sAccBox = createTextBox("Accessories", 1, selfAccessoriesSec, "Disabled")
+	setControlDisabled(sAccCont, sAccBox)
+	local _, sAccSwitchSet = createSwitch("Equip Acc.", 2, selfAccessoriesSec, false)
+	local sAccSwitchBg = selfAccessoriesSec:FindFirstChild("Settings") and selfAccessoriesSec.Settings:GetChildren()[2]
+	if sAccSwitchBg then setSwitchDisabled(sAccSwitchBg:FindFirstChildWhichIsA("TextButton")) end
+
 	local _, selfRow2Cols = createColumnLayout(leftColContainer, 2, COL_GAP, 2)
 
 	local selfSwordSec = createSection("Sword", 1, selfRow2Cols[1], {
@@ -2140,9 +2162,8 @@ do
 	selfBtnLayout.Padding = UDim.new(0, 8)
 	selfBtnLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	selfBtnLayout.Parent = selfBtnRow
-	local spoofButton = makeThemedCardBtn("Spoof Self", 1, selfBtnRow, 3)
-	local selfRevertButton = makeThemedCardBtn("Revert Changes", 2, selfBtnRow, 3, "danger")
-	local selfAccessoriesButton = makeThemedCardBtn("Accessories", 3, selfBtnRow, 3, "disabled")
+	local spoofButton = makeThemedCardBtn("Spoof Self", 1, selfBtnRow, 2)
+	local selfRevertButton = makeThemedCardBtn("Revert Changes", 2, selfBtnRow, 2, "danger")
 
 	Exports.selfSourceBox = selfSourceBox
 	Exports.selfSourceContainer = selfSourceContainer
@@ -2151,7 +2172,6 @@ do
 	Exports.selfCoinsBox = selfCoinsBox
 	Exports.selfTokensBox = selfTokensBox
 	Exports.getSelfNoScale = getSelfNoScale
-	Exports.selfAccessoriesButton = selfAccessoriesButton
 	Exports.spoofButton = spoofButton
 	Exports.selfRevertButton = selfRevertButton
 	Exports.getSelfRobloxPlus = getSelfRobloxPlus
