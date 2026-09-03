@@ -1913,9 +1913,7 @@ do
 	local fChatSwitchBg = frameChatTagSec:FindFirstChild("Settings") and frameChatTagSec.Settings:GetChildren()[2]
 	if fChatSwitchBg then setSwitchDisabled(fChatSwitchBg:FindFirstChildWhichIsA("TextButton")) end
 
-	local _, frameRow3Cols = createColumnLayout(leftColContainer, 2, COL_GAP, 3)
-
-	local frameActionSec = createSection("Apply & Revert", 1, frameRow3Cols[1], {
+	local frameActionSec = createSection("Apply & Revert", 3, leftColContainer, {
 		description = "Frame target... or I guess revert",
 		tooltip = "Apply or revert the changes done to target",
 		tag = "1x04",
@@ -1932,20 +1930,9 @@ do
 	frameBtnLayout.Padding = UDim.new(0, 8)
 	frameBtnLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	frameBtnLayout.Parent = frameBtnRow
-	local applyButton = makeThemedCardBtn("Frame Target", 1, frameBtnRow, 2)
-	local revertButton = makeThemedCardBtn("Revert Target", 2, frameBtnRow, 2, "danger")
-
-	local frameAccSec = createSection("Accessories", 1, frameRow3Cols[2], {
-		description = "Accessory spoofing [Disabled]",
-		tooltip = "Accessory spoofing is currently disabled",
-		tag = "OFF",
-		disabled = true
-	})
-	local fAccCont, fAccBox = createTextBox("Accessories", 1, frameAccSec, "Disabled")
-	setControlDisabled(fAccCont, fAccBox)
-	local _, fAccSwitchSet = createSwitch("Equip", 2, frameAccSec, false)
-	local fAccSwitchBg = frameAccSec:FindFirstChild("Settings") and frameAccSec.Settings:GetChildren()[2]
-	if fAccSwitchBg then setSwitchDisabled(fAccSwitchBg:FindFirstChildWhichIsA("TextButton")) end
+	local applyButton = makeThemedCardBtn("Frame Target", 1, frameBtnRow, 3)
+	local revertButton = makeThemedCardBtn("Revert Target", 2, frameBtnRow, 3, "danger")
+	local accessoriesButton = makeThemedCardBtn("Accessories", 3, frameBtnRow, 3, "disabled")
 
 	Exports.targetBox = targetBox
 	Exports.targetContainer = targetContainer
@@ -1955,6 +1942,7 @@ do
 	Exports.elimBox = elimBox
 	Exports.getFrameNoScale = getFrameNoScale
 	Exports.getTargetNoScale = getFrameNoScale
+	Exports.accessoriesButton = accessoriesButton
 	Exports.applyButton = applyButton
 	Exports.revertButton = revertButton
 	Exports.getFrameRobloxPlus = getFrameRobloxPlus
@@ -2135,9 +2123,7 @@ do
 	local sChatSwitchBg = selfChatTagSec:FindFirstChild("Settings") and selfChatTagSec.Settings:GetChildren()[2]
 	if sChatSwitchBg then setSwitchDisabled(sChatSwitchBg:FindFirstChildWhichIsA("TextButton")) end
 
-	local _, selfRow3Cols = createColumnLayout(leftColContainer, 2, COL_GAP, 3)
-
-	local selfActionSec = createSection("Apply & Revert", 1, selfRow3Cols[1], {
+	local selfActionSec = createSection("Apply & Revert", 3, leftColContainer, {
 		description = "Spoof!... or again I guess revert",
 		tooltip = "Apply or revert the changes you've made",
 		tag = "2x04",
@@ -2154,20 +2140,9 @@ do
 	selfBtnLayout.Padding = UDim.new(0, 8)
 	selfBtnLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	selfBtnLayout.Parent = selfBtnRow
-	local spoofButton = makeThemedCardBtn("Spoof Self", 1, selfBtnRow, 2)
-	local selfRevertButton = makeThemedCardBtn("Revert Changes", 2, selfBtnRow, 2, "danger")
-
-	local selfAccSec = createSection("Accessories", 1, selfRow3Cols[2], {
-		description = "Accessory spoofing [Disabled]",
-		tooltip = "Accessory spoofing is currently disabled",
-		tag = "OFF",
-		disabled = true
-	})
-	local sAccCont, sAccBox = createTextBox("Accessories", 1, selfAccSec, "Disabled")
-	setControlDisabled(sAccCont, sAccBox)
-	local _, sAccSwitchSet = createSwitch("Equip", 2, selfAccSec, false)
-	local sAccSwitchBg = selfAccSec:FindFirstChild("Settings") and selfAccSec.Settings:GetChildren()[2]
-	if sAccSwitchBg then setSwitchDisabled(sAccSwitchBg:FindFirstChildWhichIsA("TextButton")) end
+	local spoofButton = makeThemedCardBtn("Spoof Self", 1, selfBtnRow, 3)
+	local selfRevertButton = makeThemedCardBtn("Revert Changes", 2, selfBtnRow, 3, "danger")
+	local selfAccessoriesButton = makeThemedCardBtn("Accessories", 3, selfBtnRow, 3, "disabled")
 
 	Exports.selfSourceBox = selfSourceBox
 	Exports.selfSourceContainer = selfSourceContainer
@@ -2176,6 +2151,7 @@ do
 	Exports.selfCoinsBox = selfCoinsBox
 	Exports.selfTokensBox = selfTokensBox
 	Exports.getSelfNoScale = getSelfNoScale
+	Exports.selfAccessoriesButton = selfAccessoriesButton
 	Exports.spoofButton = spoofButton
 	Exports.selfRevertButton = selfRevertButton
 	Exports.getSelfRobloxPlus = getSelfRobloxPlus
