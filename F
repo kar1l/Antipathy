@@ -92,9 +92,11 @@ end
 local function defaultSetStatus(...)
 end
 
+local getFrameRobloxPlus = UI.getFrameRobloxPlus or defaultFalse
 local getFrameChangeUserId = UI.getFrameChangeUserId or defaultFalse
 local getFrameNamesOnly = UI.getFrameNamesOnly or defaultFalse
 local getFrameNoScale = UI.getFrameNoScale or UI.getTargetNoScale or defaultFalse
+local getSelfRobloxPlus = UI.getSelfRobloxPlus or defaultFalse
 local getSelfChangeUserId = UI.getSelfChangeUserId or defaultFalse
 local getSelfNamesOnly = UI.getSelfNamesOnly or defaultFalse
 local getSelfNoScale = UI.getSelfNoScale or defaultFalse
@@ -133,10 +135,16 @@ pcall(function()
 			if checkcaller and checkcaller() then
 				return oldIndex(self, key)
 			end
-			if key == "DisplayName" and typeof(self) == "Instance" and self:IsA("Player") then
+			if typeof(self) == "Instance" and self:IsA("Player") then
 				local data = modifiedPlayers[self]
-				if data and data.sourceDisplayName then
-					return data.sourceDisplayName
+				if data then
+					if key == "DisplayName" and data.sourceDisplayName then
+						return data.sourceDisplayName
+					elseif key == "MembershipType" and data.robloxPlus then
+						return Enum.MembershipType.Premium
+					elseif key == "HasVerifiedBadge" and data.robloxPlus then
+						return true
+					end
 				end
 			end
 			return oldIndex(self, key)
@@ -387,6 +395,156 @@ local function renamePlayerListFrame(userId, newName)
 	end
 end
 
+local RPLUS_FONT = nil
+pcall(function()
+	RPLUS_FONT = Font.new("rbxasset://LuaPackages/Packages/_Index/BuilderIcons/BuilderIcons/BuilderIcons.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+end)
+
+local function findNameFrameForUser(userId)
+	local targetIdStr = tostring(userId)
+	local playerObj = nil
+	for _, p in ipairs(Players:GetPlayers()) do
+		if p.UserId == userId then
+			playerObj = p
+			break
+		end
+	end
+
+	local pl = CoreGui:FindFirstChild("PlayerList")
+	if not pl then pcall(function() pl = CoreGui.PlayerList end) end
+
+	if pl then
+		local entry = pl:FindFirstChild("PlayerEntry_" .. targetIdStr, true)
+		if entry then
+			local nf = entry:FindFirstChild("NameFrame", true)
+			if nf then return nf end
+		end
+		local ren = renamedEntries[userId]
+		if ren then
+			local rentry = pl:FindFirstChild(ren, true)
+			if rentry then
+				local nf = rentry:FindFirstChild("NameFrame", true)
+				if nf then return nf end
+			end
+		end
+		for _, nf in ipairs(pl:GetDescendants()) do
+			if nf.Name == "NameFrame" and nf:IsA("Frame") then
+				local anc = nf.Parent
+				while anc and anc ~= pl do
+					if anc.Name:find(targetIdStr, 1, true) or (ren and anc.Name:find(ren, 1, true)) then
+						return nf
+					end
+					anc = anc.Parent
+				end
+				if playerObj then
+					for _, child in ipairs(nf:GetChildren()) do
+						if child:IsA("TextLabel") and (child.Text == playerObj.Name or child.Text == playerObj.DisplayName) then
+							return nf
+						end
+					end
+				end
+			end
+		end
+	end
+
+	local pe = findPlayerEntry(userId)
+	if pe then
+		local nf = pe:FindFirstChild("NameFrame", true)
+		if nf then return nf end
+	end
+
+	for _, nf in ipairs(CoreGui:GetDescendants()) do
+		if nf.Name == "NameFrame" and nf:IsA("Frame") then
+			local anc = nf.Parent
+			while anc and anc ~= CoreGui do
+				if anc.Name:find(targetIdStr, 1, true) then
+					return nf
+				end
+				anc = anc.Parent
+			end
+			if playerObj then
+				for _, child in ipairs(nf:GetChildren()) do
+					if child:IsA("TextLabel") and (child.Text == playerObj.Name or child.Text == playerObj.DisplayName) then
+						return nf
+					end
+				end
+			end
+		end
+	end
+	return nil
+end
+
+local function applyRobloxPlusBadge(userId, enable, saved)
+	local nf = findNameFrameForUser(userId)
+	if not nf then return false end
+
+	if enable then
+		local icon = nf:FindFirstChild("PlayerIcon")
+		if icon and icon:IsA("TextLabel") then
+			icon.Text = "roblox-plus"
+			icon.TextSize = 16
+			icon.TextColor3 = Color3.fromRGB(213, 215, 221)
+			icon.TextTransparency = 0
+			icon.BackgroundTransparency = 1
+			icon.Visible = true
+			if RPLUS_FONT then pcall(function() icon.FontFace = RPLUS_FONT end) end
+		else
+			if icon and icon:IsA("ImageLabel") then
+				icon.Visible = false
+				icon.Name = "OriginalPlayerIcon"
+			end
+			local textIcon = nf:FindFirstChild("PlayerIcon")
+			if not textIcon or not textIcon:IsA("TextLabel") then
+				textIcon = Instance.new("TextLabel")
+				textIcon.Name = "PlayerIcon"
+				local orig = nf:FindFirstChild("OriginalPlayerIcon")
+				if orig then
+					textIcon.Size = orig.Size
+					textIcon.Position = orig.Position
+					textIcon.AnchorPoint = orig.AnchorPoint
+					textIcon.LayoutOrder = orig.LayoutOrder
+					textIcon.ZIndex = orig.ZIndex
+				else
+					textIcon.Size = UDim2.new(0, 16, 0, 16)
+					textIcon.LayoutOrder = 1
+				end
+				textIcon.BackgroundTransparency = 1
+				textIcon.TextXAlignment = Enum.TextXAlignment.Center
+				textIcon.TextYAlignment = Enum.TextYAlignment.Center
+				textIcon.Parent = nf
+			end
+			textIcon.Text = "roblox-plus"
+			textIcon.TextSize = 16
+			textIcon.TextColor3 = Color3.fromRGB(213, 215, 221)
+			textIcon.TextTransparency = 0
+			textIcon.Visible = true
+			if RPLUS_FONT then pcall(function() textIcon.FontFace = RPLUS_FONT end) end
+		end
+
+		if saved and saved.identityConns and not saved.robloxPlusConn then
+			saved.robloxPlusConn = nf.ChildAdded:Connect(function(c)
+				if c.Name == "PlayerIcon" and not c:IsA("TextLabel") then
+					task.defer(applyRobloxPlusBadge, userId, true, saved)
+				end
+			end)
+			table.insert(saved.identityConns, saved.robloxPlusConn)
+		end
+	else
+		local spoofed = nf:FindFirstChild("PlayerIcon")
+		local orig = nf:FindFirstChild("OriginalPlayerIcon")
+		if orig then
+			if spoofed and spoofed:IsA("TextLabel") then
+				pcall(function() spoofed:Destroy() end)
+			end
+			orig.Name = "PlayerIcon"
+			orig.Visible = true
+		elseif spoofed and spoofed:IsA("TextLabel") then
+			spoofed.Text = ""
+		end
+	end
+	return true
+end
+
 local function getTargetPlayer(input)
 	if not input or input == "" then return nil end
 	local clean = trimText(input):lower()
@@ -505,6 +663,10 @@ local function getProfileRefs()
 		elseif dName == "country" or dName == "countryflag" then
 			if not refs.country and (desc:IsA("TextLabel") or desc:IsA("ImageLabel") or desc:IsA("ImageButton")) then
 				refs.country = desc
+			end
+		elseif not refs.robloxPlus and (dName:find("premium") or dName:find("robloxplus") or dName == "plus" or dName == "plusicon" or dName:find("vip") or dName:find("verified")) then
+			if desc:IsA("ImageLabel") or desc:IsA("ImageButton") or desc:IsA("Frame") then
+				refs.robloxPlus = desc
 			end
 		end
 	end
@@ -1258,10 +1420,14 @@ local function applyIdentitySpoofing(target, sourceUserId, spoofUserIdProperty, 
 	end
 
 	task.spawn(function()
-		task.wait(0.5)
+		task.wait(0.3)
+		local origId = saved.originalUserId or target.UserId
 		for i = 1, 6 do
-			renamePlayerListFrame(saved.originalUserId or target.UserId, fakeUsername)
-			task.wait(1)
+			renamePlayerListFrame(origId, fakeUsername)
+			if saved.robloxPlus then
+				applyRobloxPlusBadge(origId, true, saved)
+			end
+			task.wait(0.8)
 		end
 	end)
 
@@ -1321,6 +1487,21 @@ local function applyIdentitySpoofing(target, sourceUserId, spoofUserIdProperty, 
 			table.insert(saved.identityConns, {Disconnect = function() GuiService.InspectPlayerFromUserId = origInspectId end})
 		end
 	end)
+
+	if saved.robloxPlus then
+		local entry = findPlayerEntry(saved.originalUserId or target.UserId)
+		if entry then
+			for _, desc in ipairs(entry:GetDescendants()) do
+				local dName = desc.Name:lower()
+				if dName:find("premium") or dName:find("badge") or dName:find("icon") or dName:find("plus") or dName:find("vip") or dName:find("verified") then
+					pcall(function()
+						desc.Visible = true
+						if desc:IsA("ImageLabel") or desc:IsA("ImageButton") then desc.ImageTransparency = 0 end
+					end)
+				end
+			end
+		end
+	end
 
 	local targetIdStr = tostring(saved.originalUserId or target.UserId)
 	local sourceIdStr = tostring(sourceUserId)
@@ -1403,6 +1584,7 @@ local function applyIdentitySpoofing(target, sourceUserId, spoofUserIdProperty, 
 
 	local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
 	local _processedElements = {}
+
 	local function fastScanContainer(container)
 		if not container then return end
 		for _, desc in ipairs(container:GetDescendants()) do
@@ -1552,6 +1734,9 @@ local function revertIdentitySpoofing(target, saved)
 	local origUserId = saved.originalUserId or target.UserId
 	local origEntryName = "PlayerEntry_" .. tostring(origUserId)
 	pcall(function() renamePlayerListFrame(origUserId, origEntryName) end)
+	if saved.robloxPlus then
+		pcall(function() applyRobloxPlusBadge(origUserId, false, saved) end)
+	end
 
 	setProp(target, "CharacterAppearanceId", saved.originalCharAppearanceId or origUserId)
 	setProp(target, "userId", origUserId)
@@ -1696,6 +1881,7 @@ local function executeFraming(sourceText, targetText, winsText, elimText, option
 			sourceUserId = nil,
 			sourceName = nil,
 			sourceDisplayName = nil,
+			robloxPlus = options and options.robloxPlus or false,
 			charAddedConn = nil,
 			identityConns = nil
 		}
@@ -1705,6 +1891,21 @@ local function executeFraming(sourceText, targetText, winsText, elimText, option
 	local sourceUserId = nil
 	if sourceText ~= "" then
 		sourceUserId = resolveUserId(sourceText)
+	end
+
+	if options and options.robloxPlus ~= nil then
+		saved.robloxPlus = options.robloxPlus
+		local tId = saved.originalUserId or target.UserId
+		if saved.robloxPlus then
+			task.spawn(function()
+				for i = 1, 8 do
+					applyRobloxPlusBadge(tId, true, saved)
+					task.wait(0.5)
+				end
+			end)
+		else
+			applyRobloxPlusBadge(tId, false, saved)
+		end
 	end
 
 	if sourceUserId then
@@ -1760,6 +1961,7 @@ end
 
 applyButton.MouseButton1Click:Connect(function()
 	executeFraming(sourceBox.Text, targetBox.Text, winsBox.Text, elimBox.Text, {
+		robloxPlus = getFrameRobloxPlus and getFrameRobloxPlus(),
 		changeUserId = getFrameChangeUserId(),
 		namesOnly = getFrameNamesOnly(),
 		noScale = getFrameNoScale and getFrameNoScale()
@@ -1789,39 +1991,57 @@ spoofButton.MouseButton1Click:Connect(function()
 	local coinsText = trimText(selfCoinsBox.Text)
 	local tokensText = trimText(selfTokensBox.Text)
 	local noScale = getSelfNoScale and getSelfNoScale()
+	local robloxPlus = getSelfRobloxPlus and getSelfRobloxPlus()
+
+	local saved = modifiedPlayers[LocalPlayer]
+	if not saved then
+		local character = LocalPlayer.Character
+		local hum = character and character:FindFirstChild("Humanoid")
+		local savedDesc = nil
+		if hum then
+			pcall(function() savedDesc = hum:GetAppliedDescription() end)
+		end
+		if not savedDesc then
+			savedDesc = cachedGetDescription(LocalPlayer.UserId)
+		end
+		modifiedPlayers[LocalPlayer] = {
+			description = savedDesc,
+			originalName = LocalPlayer.Name,
+			originalDisplayName = LocalPlayer.DisplayName,
+			originalHumanoidDisplayName = hum and hum.DisplayName or LocalPlayer.DisplayName,
+			originalUserId = LocalPlayer.UserId,
+			sourceUserId = nil,
+			sourceName = nil,
+			sourceDisplayName = nil,
+			robloxPlus = robloxPlus or false,
+			charAddedConn = nil,
+			identityConns = {}
+		}
+		saved = modifiedPlayers[LocalPlayer]
+	end
+
+	saved.robloxPlus = robloxPlus or false
+
+	if robloxPlus then
+		task.spawn(function()
+			for i = 1, 8 do
+				applyRobloxPlusBadge(LocalPlayer.UserId, true, saved)
+				task.wait(0.5)
+			end
+		end)
+	else
+		applyRobloxPlusBadge(LocalPlayer.UserId, false, saved)
+	end
 
 	if sourceInput ~= "" then
 		local sourceUserId = resolveUserId(sourceInput)
 		if sourceUserId then
-			local character = LocalPlayer.Character
-			local saved = modifiedPlayers[LocalPlayer]
-			if not saved then
-				local hum = character and character:FindFirstChild("Humanoid")
-				local savedDesc = nil
-				if hum then
-					pcall(function() savedDesc = hum:GetAppliedDescription() end)
-				end
-				if not savedDesc then
-					savedDesc = cachedGetDescription(LocalPlayer.UserId)
-				end
-				modifiedPlayers[LocalPlayer] = {
-					description = savedDesc,
-					originalName = LocalPlayer.Name,
-					originalDisplayName = LocalPlayer.DisplayName,
-					originalHumanoidDisplayName = hum and hum.DisplayName or LocalPlayer.DisplayName,
-					originalUserId = LocalPlayer.UserId,
-					sourceUserId = sourceUserId,
-					charAddedConn = nil,
-					identityConns = nil
-				}
-				saved = modifiedPlayers[LocalPlayer]
-			end
-
 			saved.sourceUserId = sourceUserId
 			local sName, sDispName = cachedGetSourceNames(sourceUserId)
 			saved.sourceName = sName or sourceInput
 			saved.sourceDisplayName = sDispName or sName or sourceInput
 
+			local character = LocalPlayer.Character
 			if character and not getSelfNamesOnly() then
 				task.spawn(function()
 					local desc = cachedGetDescription(sourceUserId)
@@ -1866,15 +2086,10 @@ spoofButton.MouseButton1Click:Connect(function()
 					task.wait(0.5)
 				end
 			end)
-
-			local displayName = sName or sourceInput
-			setStatus("Spoofed as " .. displayName, Color3.fromRGB(120, 255, 120))
 		else
 			setStatus("Invalid UserID or Username", Color3.fromRGB(255, 120, 120))
+			return
 		end
-	elseif winsText ~= "" or elimText ~= "" then
-		spoofLeaderstats(LocalPlayer, winsText, elimText, noScale)
-		setStatus("Applied self stats", Color3.fromRGB(120, 255, 120))
 	end
 
 	if winsText ~= "" or elimText ~= "" then
@@ -1883,11 +2098,11 @@ spoofButton.MouseButton1Click:Connect(function()
 
 	if coinsText ~= "" or tokensText ~= "" then
 		applyHudCurrency(coinsText, tokensText)
-		if sourceInput == "" and winsText == "" and elimText == "" then
-			setStatus("Applied currencies", Color3.fromRGB(120, 255, 120))
-		end
 	end
+
 	isSpoofed = true
+	local statusMsg = (sourceInput ~= "" and ("Spoofed as " .. (saved.sourceDisplayName or sourceInput))) or (robloxPlus and "Applied Roblox Plus badge") or "Applied self changes"
+	setStatus(statusMsg, Color3.fromRGB(120, 255, 120))
 end)
 
 selfRevertButton.MouseButton1Click:Connect(function()
