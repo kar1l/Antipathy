@@ -991,14 +991,15 @@ local function createSection(sectionTitle, order, parent, opts)
 	local description = opts.description or ""
 	local isExpanded = (opts.defaultExpanded == true)
 	local noStatus = opts.noStatus or false
+	local isDisabled = (opts.disabled == true)
 	local settingsLayout
 
 	local HEADER_H = noStatus and 54 or 96
 	local section = Instance.new("Frame")
 	section.LayoutOrder = order
 	section.Size = UDim2.new(1, 0, 0, HEADER_H)
-	section.BackgroundColor3 = Color3.fromRGB(10, 10, 14)
-	section.BackgroundTransparency = 0.25
+	section.BackgroundColor3 = isDisabled and Color3.fromRGB(6, 6, 8) or Color3.fromRGB(10, 10, 14)
+	section.BackgroundTransparency = isDisabled and 0.45 or 0.25
 	section.BorderSizePixel = 0
 	section.ZIndex = 10
 	section.ClipsDescendants = not isExpanded
@@ -1007,20 +1008,20 @@ local function createSection(sectionTitle, order, parent, opts)
 
 	local sGrad = Instance.new("UIGradient")
 	sGrad.Color = ColorSequence.new{
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(18, 18, 24)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(6, 6, 8))
+		ColorSequenceKeypoint.new(0, isDisabled and Color3.fromRGB(10, 10, 14) or Color3.fromRGB(18, 18, 24)),
+		ColorSequenceKeypoint.new(1, isDisabled and Color3.fromRGB(4, 4, 6) or Color3.fromRGB(6, 6, 8))
 	}
 	sGrad.Rotation = 135
 	sGrad.Parent = section
 
-	local cornerColor = Color3.fromRGB(60, 60, 68)
+	local cornerColor = isDisabled and Color3.fromRGB(30, 30, 36) or Color3.fromRGB(60, 60, 68)
 	local corners = addCornerBorder(section, cornerColor, 1, 10)
 
 	local sectionStroke = Instance.new("UIStroke")
 	sectionStroke.Name = "HoverStroke"
 	sectionStroke.Thickness = 1
 	sectionStroke.Color = cornerColor
-	sectionStroke.Transparency = 1
+	sectionStroke.Transparency = isDisabled and 0.3 or 1
 	sectionStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 	sectionStroke.Parent = section
 
@@ -1029,6 +1030,7 @@ local function createSection(sectionTitle, order, parent, opts)
 	header.BackgroundTransparency = 1
 	header.Text = ""
 	header.AutoButtonColor = false
+	header.Active = not isDisabled
 	header.ZIndex = 11
 	header.Parent = section
 
@@ -1038,7 +1040,7 @@ local function createSection(sectionTitle, order, parent, opts)
 	titleLbl.Size = UDim2.new(0, 0, 0, 24)
 	titleLbl.Position = UDim2.new(0, 16, 0, 6)
 	titleLbl.Text = sectionTitle
-	titleLbl.TextColor3 = Color3.fromRGB(240, 240, 245)
+	titleLbl.TextColor3 = isDisabled and Color3.fromRGB(100, 100, 110) or Color3.fromRGB(240, 240, 245)
 	titleLbl.Font = Enum.Font.GothamBold
 	titleLbl.TextSize = 17
 	titleLbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -1066,7 +1068,7 @@ local function createSection(sectionTitle, order, parent, opts)
 	descLbl.Size = UDim2.new(1, -40, 0, 15)
 	descLbl.Position = UDim2.new(0, 16, 0, 31)
 	descLbl.Text = description
-	descLbl.TextColor3 = Color3.fromRGB(130, 130, 140)
+	descLbl.TextColor3 = isDisabled and Color3.fromRGB(70, 70, 80) or Color3.fromRGB(130, 130, 140)
 	descLbl.Font = Enum.Font.GothamMedium
 	descLbl.TextSize = 12
 	descLbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -1079,7 +1081,7 @@ local function createSection(sectionTitle, order, parent, opts)
 	arrow.Size = UDim2.new(0, 18, 0, 18)
 	arrow.Position = UDim2.new(1, -26, 0, 8)
 	arrow.Text = isExpanded and "▲" or "▼"
-	arrow.TextColor3 = isExpanded and Color3.fromRGB(220, 220, 220) or Color3.fromRGB(100, 100, 105)
+	arrow.TextColor3 = isDisabled and Color3.fromRGB(50, 50, 60) or (isExpanded and Color3.fromRGB(220, 220, 220) or Color3.fromRGB(100, 100, 105))
 	arrow.Font = Enum.Font.GothamBold
 	arrow.TextSize = 12
 	arrow.ZIndex = 12
@@ -1100,8 +1102,9 @@ local function createSection(sectionTitle, order, parent, opts)
 		statusText.BackgroundTransparency = 1
 		statusText.Size = UDim2.new(1, -40, 0, 36)
 		statusText.Position = UDim2.new(0, 28, 0, 50)
-		statusText.Text = "No changes"
-		statusText.TextColor3 = Color3.fromRGB(200, 60, 60)
+		statusText.Text = isDisabled and "Disabled" or "No changes"
+		statusText.TextColor3 = isDisabled and Color3.fromRGB(80, 80, 90) or Color3.fromRGB(200, 60, 60)
+		if isDisabled then statusDot.BackgroundColor3 = Color3.fromRGB(50, 50, 60) end
 		statusText.Font = Enum.Font.Code
 		statusText.TextSize = 11
 		statusText.TextXAlignment = Enum.TextXAlignment.Left
@@ -1112,6 +1115,7 @@ local function createSection(sectionTitle, order, parent, opts)
 	end
 
 	header.MouseEnter:Connect(function()
+		if isDisabled then return end
 		activeHoveredObjects[corners] = "corners"
 		activeHoveredObjects[titleLbl] = "text"
 		activeHoveredObjects[descLbl] = "text"
@@ -1209,6 +1213,48 @@ local function createSwitch(text, order, parent, defaultState, callback)
 
 	bg.MouseButton1Click:Connect(function() setSwitch(not isOn) end)
 	return function() return isOn end, setSwitch
+end
+
+local function setControlDisabled(container, box)
+	if box and box:IsA("TextBox") then
+		box.TextEditable = false
+		box.Active = false
+		box.Text = ""
+		box.PlaceholderText = "Disabled"
+		box.PlaceholderColor3 = Color3.fromRGB(55, 55, 65)
+		box.TextColor3 = Color3.fromRGB(70, 70, 80)
+		local holder = box.Parent
+		if holder then
+			holder.BackgroundColor3 = Color3.fromRGB(8, 8, 11)
+			for _, desc in ipairs(holder:GetChildren()) do
+				if desc:IsA("Frame") and desc ~= box then
+					desc.BackgroundColor3 = Color3.fromRGB(26, 26, 32)
+					activeHoveredObjects[desc] = nil
+				end
+			end
+		end
+	end
+	if container then
+		local lbl = container:FindFirstChildWhichIsA("TextLabel")
+		if lbl then lbl.TextColor3 = Color3.fromRGB(75, 75, 85) end
+	end
+end
+
+local function setSwitchDisabled(switchBg)
+	if switchBg then
+		switchBg.Active = false
+		switchBg.AutoButtonColor = false
+		switchBg.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
+		local ss = switchBg:FindFirstChildWhichIsA("UIStroke")
+		if ss then ss.Color = Color3.fromRGB(25, 25, 32) end
+		local kn = switchBg:FindFirstChildWhichIsA("Frame")
+		if kn then kn.BackgroundColor3 = Color3.fromRGB(38, 38, 45) end
+		local parent = switchBg.Parent
+		if parent then
+			local lbl = parent:FindFirstChildWhichIsA("TextLabel")
+			if lbl then lbl.TextColor3 = Color3.fromRGB(75, 75, 85) end
+		end
+	end
 end
 
 local function getSuggestion(pfx, autoType)
@@ -1361,22 +1407,25 @@ end
 
 local function makeThemedCardBtn(txt, ord, parentRow, totalCount, colorVariant)
 	totalCount = totalCount or 2
+	local isDisabled = (colorVariant == "disabled")
 	local b = Instance.new("TextButton")
 	b.LayoutOrder = ord
 	b.Size = UDim2.new(1/totalCount, -4, 1, 0)
-	b.BackgroundColor3 = colorVariant == "danger" and Color3.fromRGB(26, 14, 14) or Color3.fromRGB(14, 14, 18)
+	b.BackgroundColor3 = isDisabled and Color3.fromRGB(8, 8, 11) or (colorVariant == "danger" and Color3.fromRGB(26, 14, 14) or Color3.fromRGB(14, 14, 18))
 	b.Text = txt
 	b.Font = Enum.Font.GothamBold
 	b.TextSize = 12
-	b.TextColor3 = Color3.fromRGB(220, 220, 225)
+	b.TextColor3 = isDisabled and Color3.fromRGB(70, 70, 80) or Color3.fromRGB(220, 220, 225)
 	b.AutoButtonColor = false
+	b.Active = not isDisabled
 	b.BorderSizePixel = 0
 	b.ZIndex = 12
 	b.Parent = parentRow
-	local defaultCornerCol = colorVariant == "danger" and Color3.fromRGB(180, 70, 70) or Color3.fromRGB(80, 80, 90)
+	local defaultCornerCol = isDisabled and Color3.fromRGB(28, 28, 35) or (colorVariant == "danger" and Color3.fromRGB(180, 70, 70) or Color3.fromRGB(80, 80, 90))
 	local corners = addCornerBorder(b, defaultCornerCol, 1, 5)
 
 	b.MouseEnter:Connect(function()
+		if isDisabled then return end
 		if b.Text ~= "Done" and b.Text ~= "Failed" then
 			TweenService:Create(b, TI_FAST, {BackgroundColor3 = colorVariant == "danger" and Color3.fromRGB(48, 22, 22) or Color3.fromRGB(32, 32, 40)}):Play()
 		end
@@ -1810,23 +1859,18 @@ do
 	local targetManualSec, _, updateTargetManualStatus = createSection("Target Manual", 2, rightCol, {
 		description = "Manual target overrides [Disabled]",
 		tooltip = "Manual target overrides are currently disabled",
-		tag = "1x05"
+		tag = "OFF",
+		disabled = true
 	})
 	local tarManDispCont, tarManDisplayNameBox = createTextBox("DisplayName", 1, targetManualSec, "Disabled")
 	local tarManUserCont, tarManUsernameBox = createTextBox("Username", 2, targetManualSec, "Disabled")
 	local tarManTarCont, tarManTargetIdBox = createTextBox("Tar. UserID", 3, targetManualSec, "Disabled", 14, true)
 	local tarManSorcCont, tarManSourceIdBox = createTextBox("Sorc. UserID", 4, targetManualSec, "Disabled", 14, true)
 
-	for _, b in ipairs({tarManDisplayNameBox, tarManUsernameBox, tarManTargetIdBox, tarManSourceIdBox}) do
-		b.TextEditable = false
-		b.Active = false
-		b.PlaceholderColor3 = Color3.fromRGB(75, 75, 85)
-		b.TextColor3 = Color3.fromRGB(100, 100, 110)
-	end
-	for _, c in ipairs({tarManDispCont, tarManUserCont, tarManTarCont, tarManSorcCont}) do
-		local lbl = c:FindFirstChildWhichIsA("TextLabel")
-		if lbl then lbl.TextColor3 = Color3.fromRGB(100, 100, 110) end
-	end
+	setControlDisabled(tarManDispCont, tarManDisplayNameBox)
+	setControlDisabled(tarManUserCont, tarManUsernameBox)
+	setControlDisabled(tarManTarCont, tarManTargetIdBox)
+	setControlDisabled(tarManSorcCont, tarManSourceIdBox)
 	updateTargetManualStatus(false, "Disabled")
 
 	local tarManBtnRow = Instance.new("Frame")
@@ -1840,17 +1884,36 @@ do
 	tarManBtnLayout.Padding = UDim.new(0, 8)
 	tarManBtnLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	tarManBtnLayout.Parent = tarManBtnRow
-	local tarManApplyBtn = makeThemedCardBtn("Apply Manual", 1, tarManBtnRow, 2)
-	local tarManRevertBtn = makeThemedCardBtn("Revert Manual", 2, tarManBtnRow, 2, "danger")
+	local tarManApplyBtn = makeThemedCardBtn("Apply Manual", 1, tarManBtnRow, 2, "disabled")
+	local tarManRevertBtn = makeThemedCardBtn("Revert Manual", 2, tarManBtnRow, 2, "disabled")
 
-	for _, btn in ipairs({tarManApplyBtn, tarManRevertBtn}) do
-		btn.Active = false
-		btn.AutoButtonColor = false
-		btn.BackgroundColor3 = Color3.fromRGB(14, 14, 16)
-		btn.TextColor3 = Color3.fromRGB(75, 75, 85)
-	end
+	local _, frameRow2Cols = createColumnLayout(leftColContainer, 2, COL_GAP, 2)
 
-	local frameActionSec = createSection("Apply & Revert", 2, leftColContainer, {
+	local frameSwordSec = createSection("Sword", 1, frameRow2Cols[1], {
+		description = "Sword skin spoofing [Disabled]",
+		tooltip = "Sword skin spoofing is currently disabled",
+		tag = "OFF",
+		disabled = true
+	})
+	local fSwordCont, fSwordBox = createTextBox("Sword", 1, frameSwordSec, "Disabled")
+	setControlDisabled(fSwordCont, fSwordBox)
+	local _, fSwordSwitchSet = createSwitch("Equip Sword", 2, frameSwordSec, false)
+	local fSwordSwitchBg = frameSwordSec:FindFirstChild("Settings") and frameSwordSec.Settings:GetChildren()[2]
+	if fSwordSwitchBg then setSwitchDisabled(fSwordSwitchBg:FindFirstChildWhichIsA("TextButton")) end
+
+	local frameChatTagSec = createSection("Chat Tag", 1, frameRow2Cols[2], {
+		description = "Custom chat tag [Disabled]",
+		tooltip = "Custom chat tag is currently disabled",
+		tag = "OFF",
+		disabled = true
+	})
+	local fChatCont, fChatBox = createTextBox("Chat Tag", 1, frameChatTagSec, "Disabled")
+	setControlDisabled(fChatCont, fChatBox)
+	local _, fChatSwitchSet = createSwitch("Show Tag", 2, frameChatTagSec, false)
+	local fChatSwitchBg = frameChatTagSec:FindFirstChild("Settings") and frameChatTagSec.Settings:GetChildren()[2]
+	if fChatSwitchBg then setSwitchDisabled(fChatSwitchBg:FindFirstChildWhichIsA("TextButton")) end
+
+	local frameActionSec = createSection("Apply & Revert", 3, leftColContainer, {
 		description = "Frame target... or I guess revert",
 		tooltip = "Apply or revert the changes done to target",
 		tag = "1x04",
@@ -1867,8 +1930,9 @@ do
 	frameBtnLayout.Padding = UDim.new(0, 8)
 	frameBtnLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	frameBtnLayout.Parent = frameBtnRow
-	local applyButton = makeThemedCardBtn("Frame Target", 1, frameBtnRow, 2)
-	local revertButton = makeThemedCardBtn("Revert Target", 2, frameBtnRow, 2, "danger")
+	local applyButton = makeThemedCardBtn("Frame Target", 1, frameBtnRow, 3)
+	local revertButton = makeThemedCardBtn("Revert Target", 2, frameBtnRow, 3, "danger")
+	local accessoriesButton = makeThemedCardBtn("Accessories", 3, frameBtnRow, 3, "disabled")
 
 	Exports.targetBox = targetBox
 	Exports.targetContainer = targetContainer
@@ -1878,6 +1942,7 @@ do
 	Exports.elimBox = elimBox
 	Exports.getFrameNoScale = getFrameNoScale
 	Exports.getTargetNoScale = getFrameNoScale
+	Exports.accessoriesButton = accessoriesButton
 	Exports.applyButton = applyButton
 	Exports.revertButton = revertButton
 	Exports.getFrameRobloxPlus = getFrameRobloxPlus
@@ -2006,22 +2071,16 @@ do
 	local selfManualSec, _, updateSelfManualStatus = createSection("Self Manual", 2, rightCol, {
 		description = "Manual self overrides [Disabled]",
 		tooltip = "Manual self overrides are currently disabled",
-		tag = "2x05"
+		tag = "OFF",
+		disabled = true
 	})
 	local selfManDispCont, selfManDisplayNameBox = createTextBox("DisplayName", 1, selfManualSec, "Disabled")
 	local selfManUserCont, selfManUsernameBox = createTextBox("Username", 2, selfManualSec, "Disabled")
 	local selfManSorcCont, selfManSourceIdBox = createTextBox("UserID", 3, selfManualSec, "Disabled", 14, true)
 
-	for _, b in ipairs({selfManDisplayNameBox, selfManUsernameBox, selfManSourceIdBox}) do
-		b.TextEditable = false
-		b.Active = false
-		b.PlaceholderColor3 = Color3.fromRGB(75, 75, 85)
-		b.TextColor3 = Color3.fromRGB(100, 100, 110)
-	end
-	for _, c in ipairs({selfManDispCont, selfManUserCont, selfManSorcCont}) do
-		local lbl = c:FindFirstChildWhichIsA("TextLabel")
-		if lbl then lbl.TextColor3 = Color3.fromRGB(100, 100, 110) end
-	end
+	setControlDisabled(selfManDispCont, selfManDisplayNameBox)
+	setControlDisabled(selfManUserCont, selfManUsernameBox)
+	setControlDisabled(selfManSorcCont, selfManSourceIdBox)
 	updateSelfManualStatus(false, "Disabled")
 
 	local selfManBtnRow = Instance.new("Frame")
@@ -2035,17 +2094,36 @@ do
 	selfManBtnLayout.Padding = UDim.new(0, 8)
 	selfManBtnLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	selfManBtnLayout.Parent = selfManBtnRow
-	local selfManApplyBtn = makeThemedCardBtn("Apply Manual", 1, selfManBtnRow, 2)
-	local selfManRevertBtn = makeThemedCardBtn("Revert Manual", 2, selfManBtnRow, 2, "danger")
+	local selfManApplyBtn = makeThemedCardBtn("Apply Manual", 1, selfManBtnRow, 2, "disabled")
+	local selfManRevertBtn = makeThemedCardBtn("Revert Manual", 2, selfManBtnRow, 2, "disabled")
 
-	for _, btn in ipairs({selfManApplyBtn, selfManRevertBtn}) do
-		btn.Active = false
-		btn.AutoButtonColor = false
-		btn.BackgroundColor3 = Color3.fromRGB(14, 14, 16)
-		btn.TextColor3 = Color3.fromRGB(75, 75, 85)
-	end
+	local _, selfRow2Cols = createColumnLayout(leftColContainer, 2, COL_GAP, 2)
 
-	local selfActionSec = createSection("Apply & Revert", 2, leftColContainer, {
+	local selfSwordSec = createSection("Sword", 1, selfRow2Cols[1], {
+		description = "Sword skin spoofing [Disabled]",
+		tooltip = "Sword skin spoofing is currently disabled",
+		tag = "OFF",
+		disabled = true
+	})
+	local sSwordCont, sSwordBox = createTextBox("Sword", 1, selfSwordSec, "Disabled")
+	setControlDisabled(sSwordCont, sSwordBox)
+	local _, sSwordSwitchSet = createSwitch("Equip Sword", 2, selfSwordSec, false)
+	local sSwordSwitchBg = selfSwordSec:FindFirstChild("Settings") and selfSwordSec.Settings:GetChildren()[2]
+	if sSwordSwitchBg then setSwitchDisabled(sSwordSwitchBg:FindFirstChildWhichIsA("TextButton")) end
+
+	local selfChatTagSec = createSection("Chat Tag", 1, selfRow2Cols[2], {
+		description = "Custom chat tag [Disabled]",
+		tooltip = "Custom chat tag is currently disabled",
+		tag = "OFF",
+		disabled = true
+	})
+	local sChatCont, sChatBox = createTextBox("Chat Tag", 1, selfChatTagSec, "Disabled")
+	setControlDisabled(sChatCont, sChatBox)
+	local _, sChatSwitchSet = createSwitch("Show Tag", 2, selfChatTagSec, false)
+	local sChatSwitchBg = selfChatTagSec:FindFirstChild("Settings") and selfChatTagSec.Settings:GetChildren()[2]
+	if sChatSwitchBg then setSwitchDisabled(sChatSwitchBg:FindFirstChildWhichIsA("TextButton")) end
+
+	local selfActionSec = createSection("Apply & Revert", 3, leftColContainer, {
 		description = "Spoof!... or again I guess revert",
 		tooltip = "Apply or revert the changes you've made",
 		tag = "2x04",
@@ -2062,8 +2140,9 @@ do
 	selfBtnLayout.Padding = UDim.new(0, 8)
 	selfBtnLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	selfBtnLayout.Parent = selfBtnRow
-	local spoofButton = makeThemedCardBtn("Spoof Self", 1, selfBtnRow, 2)
-	local selfRevertButton = makeThemedCardBtn("Revert Changes", 2, selfBtnRow, 2, "danger")
+	local spoofButton = makeThemedCardBtn("Spoof Self", 1, selfBtnRow, 3)
+	local selfRevertButton = makeThemedCardBtn("Revert Changes", 2, selfBtnRow, 3, "danger")
+	local selfAccessoriesButton = makeThemedCardBtn("Accessories", 3, selfBtnRow, 3, "disabled")
 
 	Exports.selfSourceBox = selfSourceBox
 	Exports.selfSourceContainer = selfSourceContainer
@@ -2072,6 +2151,7 @@ do
 	Exports.selfCoinsBox = selfCoinsBox
 	Exports.selfTokensBox = selfTokensBox
 	Exports.getSelfNoScale = getSelfNoScale
+	Exports.selfAccessoriesButton = selfAccessoriesButton
 	Exports.spoofButton = spoofButton
 	Exports.selfRevertButton = selfRevertButton
 	Exports.getSelfRobloxPlus = getSelfRobloxPlus
